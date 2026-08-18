@@ -50,19 +50,6 @@ def create_app(config_class=Config):
             "production": app.config.get("IS_PRODUCTION", False),
         }), status_code
 
-    @app.route("/debug-env", methods=["GET"])
-    def debug_env():
-        return jsonify({
-            "path": request.path,
-            "full_path": request.full_path,
-            "url": request.url,
-            "base_url": request.base_url,
-            "environ_PATH_INFO": request.environ.get("PATH_INFO"),
-            "environ_SCRIPT_NAME": request.environ.get("SCRIPT_NAME"),
-            "headers": {k: v for k, v in request.headers.items()},
-            "environ_keys": list(request.environ.keys()),
-        })
-
     # Explicit Static Asset Delivery (Guarantees static file serving on Vercel)
     @app.route("/static/<path:filename>")
     @app.route("/api/static/<path:filename>")
@@ -96,13 +83,7 @@ def create_app(config_class=Config):
     # Error Handlers
     @app.errorhandler(404)
     def page_not_found(e):
-        return jsonify({
-            "error": "404 Not Found",
-            "request_path": request.path,
-            "environ_PATH_INFO": request.environ.get("PATH_INFO"),
-            "environ_SCRIPT_NAME": request.environ.get("SCRIPT_NAME"),
-            "headers": {k: v for k, v in request.headers.items()},
-        }), 404
+        return render_template("errors/404.html"), 404
 
     @app.errorhandler(500)
     def internal_server_error(e):
