@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Flask, render_template
+from flask import Flask, render_template, request, send_from_directory
 from config import Config
 from models import db
 from models.test import Test
@@ -10,9 +10,16 @@ from routes import register_routes
 from utils.security import is_admin_authenticated
 from utils.helpers import format_date, generate_test_id, generate_question_id
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 def create_app(config_class=Config):
     """Flask Application Factory"""
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(BASE_DIR, "templates"),
+        static_folder=os.path.join(BASE_DIR, "static"),
+        static_url_path="/static"
+    )
     app.config.from_object(config_class)
 
     # Initialize Database
@@ -20,6 +27,13 @@ def create_app(config_class=Config):
 
     # Register Blueprints
     register_routes(app)
+
+    # Explicit static files route to guarantee static delivery on Vercel
+    @app.route("/static/<path:filename>")
+    @app.route("/api/static/<path:filename>")
+    @app.route("/api/index/static/<path:filename>")
+    def custom_static(filename):
+        return send_from_directory(os.path.join(BASE_DIR, "static"), filename)
 
     # Context Processors & Template Filters
     @app.context_processor
@@ -37,6 +51,11 @@ def create_app(config_class=Config):
     # Error Handlers
     @app.errorhandler(404)
     def page_not_found(e):
+        # If Vercel passed an unstripped serverless root path, route to home
+        raw_path = (request.path or "").rstrip("/")
+        if raw_path in ("", "/api", "/api/index", "/index", "/index.py", "/api/index.py"):
+            from routes.auth import index
+            return index()
         return render_template("errors/404.html"), 404
 
     @app.errorhandler(500)
@@ -45,8 +64,11 @@ def create_app(config_class=Config):
 
     # Initialize Database Tables & Seed Demo Test if empty
     with app.app_context():
-        db.create_all()
-        seed_initial_data()
+        try:
+            db.create_all()
+            seed_initial_data()
+        except Exception as err:
+            print("DB init note:", err)
 
     return app
 
@@ -78,61 +100,68 @@ def seed_initial_data():
         )
         db.session.add(sample_test)
 
-        # Seed 4 Questions
-        q1 = Question(
-            question_id="q_101",
-            test_id=demo_test_id,
-            question_text="What is the SI unit of electric current?",
-            question_type="multiple-choice",
-            options_json=json.dumps(["Volt", "Ampere", "Ohm", "Watt"]),
-            correct_answer="Ampere",
-            marks=1,
-            required=True,
-            explanation="The SI unit of electric current is the Ampere (A), named after André-Marie Ampère.",
-            order_index=0,
-        )
-        q2 = Question(
-            question_id="q_102",
-            test_id=demo_test_id,
-            question_text="Light travels faster in vacuum than through glass.",
-            question_type="true-false",
-            options_json=json.dumps(["True", "False"]),
-            correct_answer="True",
-            marks=1,
-            required=True,
-            explanation="Light travels at its maximum speed of ~300,000 km/s in a vacuum and slows down in optical mediums like glass.",
-            order_index=1,
-        )
-        q3 = Question(
-            question_id="q_103",
-            test_id=demo_test_id,
-            question_text="Which of the following are noble gases? (Check all that apply)",
-            question_type="multiple-correct",
-            options_json=json.dumps(["Helium", "Oxygen", "Neon", "Argon"]),
-            correct_answers_json=json.dumps(["Helium", "Neon", "Argon"]),
-            marks=2,
-            required=True,
-            explanation="Helium, Neon, and Argon belong to Group 18 (noble gases). Oxygen is a diatomic reactive gas in Group 16.",
-            order_index=2,
-        )
-        q4 = Question(
-            question_id="q_104",
-            test_id=demo_test_id,
-            question_text="What is the chemical formula for water?",
-            question_type="multiple-choice",
-            options_json=json.dumps(["CO2", "H2O", "NaCl", "CH4"]),
-            correct_answer="H2O",
-            marks=1,
-            required=True,
-            explanation="Water consists of two hydrogen atoms bonded to one oxygen atom (H2O).",
-            order_index=3,
-        )
+        questions_data = [
+            {
+                "id": "q_101",
+                "type": "multiple-choice",
+                "question": "What is the SI unit of electric current?",
+                "options": ["Volt", "Ampere", "Ohm", "Watt"],
+                "correctAnswer": "Ampere",
+                "marks": 1,
+                "required": True,
+                "explanation": "The ampere (symbol: A) is the base unit of electric current in the International System of Units (SI)."
+            },
+            {
+                "id": "q_102",
+                "type": "true-false",
+                "question": "Light travels faster in water than in a vacuum.",
+                "options": ["True", "False"],
+                "correctAnswer": "False",
+                "marks": 1,
+                "required": True,
+                "explanation": "Light travels fastest in a vacuum (approx 3 x 10^8 m/s) and slows down in denser optical mediums like water."
+            },
+            {
+                "id": "q_103",
+                "type": "multiple-correct",
+                "question": "Which of the following are Noble Gases? (Select all that apply)",
+                "options": ["Helium", "Nitrogen", "Neon", "Argon"],
+                "correctAnswers": ["Helium", "Neon", "Argon"],
+                "marks": 2,
+                "required": True,
+                "explanation": "Helium, Neon, and Argon are Group 18 noble gases with full valence electron shells. Nitrogen is in Group 15."
+            },
+            {
+                "id": "q_104",
+                "type": "short-answer",
+                "question": "What is the chemical formula for water?",
+                "correctAnswer": "H2O",
+                "marks": 1,
+                "required": True,
+                "explanation": "Water is composed of two hydrogen atoms bonded to one oxygen atom (H2O)."
+            }
+        ]
 
-        db.session.add_all([q1, q2, q3, q4])
+        for i, q in enumerate(questions_data):
+            question_obj = Question(
+                question_id=q["id"],
+                test_id=demo_test_id,
+                question_text=q["question"],
+                question_type=q["type"],
+                options_json=json.dumps(q.get("options", [])),
+                correct_answer=q.get("correctAnswer", ""),
+                correct_answers_json=json.dumps(q.get("correctAnswers", [])),
+                marks=q["marks"],
+                required=q.get("required", True),
+                explanation=q.get("explanation", ""),
+                order_index=i
+            )
+            db.session.add(question_obj)
+
         db.session.commit()
 
+# Create application instance for WSGI runners
 app = create_app()
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

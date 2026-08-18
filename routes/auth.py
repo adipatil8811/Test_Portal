@@ -5,7 +5,11 @@ auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/")
 @auth_bp.route("/api")
+@auth_bp.route("/api/")
 @auth_bp.route("/api/index")
+@auth_bp.route("/api/index.py")
+@auth_bp.route("/index")
+@auth_bp.route("/index.py")
 def index():
     """Homepage route"""
     if is_admin_authenticated():
