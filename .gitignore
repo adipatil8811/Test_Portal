@@ -1,0 +1,46 @@
+# Python & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Environment Variables
+.env
+
+# Instance & SQLite Database
+instance/
+*.db
+*.sqlite3
+
+# Distribution / Packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing & Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# OS / Editor Artifacts
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

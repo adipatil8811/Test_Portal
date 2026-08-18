@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment Unavailable — {{ test.title }}{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width: 500px;">
+  <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+    <div style="font-size: 3rem; margin-bottom: 0.75rem;">🔒</div>
+    <h1 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">
+      Assessment Unavailable
+    </h1>
+    <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;">
+      {{ reason }}
+    </p>
+
+    <div style="padding-top: 1.25rem; border-top: 1px solid var(--border-light);">
+      <a href="{{ url_for('student.my_certificates') }}" class="btn btn-secondary btn-sm">
+        📜 Go to My Certificates Portal
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

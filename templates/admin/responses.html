@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Responses for {{ test.title }} — Teacher Portal{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+  <!-- Header Action Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-sm">← Back</a>
+        <span class="badge badge-primary">{{ test.subject or 'Assessment' }}</span>
+      </div>
+      <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">{{ test.title }} — Submissions</h1>
+    </div>
+
+    <a href="{{ url_for('admin.edit_test', test_id=test.test_id) }}" class="btn btn-secondary btn-sm">
+      ✏️ Edit Test
+    </a>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stats-grid" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+      <div class="stat-title">Total Submissions</div>
+      <div class="stat-value">{{ summary.totalSubmissions }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Average Score</div>
+      <div class="stat-value">{{ summary.avgScore }} / {{ test.total_marks }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Passed Count</div>
+      <div class="stat-value" style="color: var(--success);">{{ summary.passedCount }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Pass Rate</div>
+      <div class="stat-value" style="color: var(--primary);">{{ summary.passRate }}%</div>
+    </div>
+  </div>
+
+  <!-- Search Filter -->
+  <form method="GET" action="{{ url_for('results.test_responses', test_id=test.test_id) }}" style="margin-bottom: 1.25rem; display: flex; gap: 0.5rem;">
+    <input
+      type="text"
+      name="search"
+      class="form-control"
+      placeholder="Search by student name, roll number, or email..."
+      value="{{ search }}"
+      style="max-width: 400px;"
+    />
+    <button type="submit" class="btn btn-primary btn-sm">Search</button>
+    {% if search %}
+      <a href="{{ url_for('results.test_responses', test_id=test.test_id) }}" class="btn btn-secondary btn-sm">Clear</a>
+    {% endif %}
+  </form>
+
+  <!-- Submissions Table Card -->
+  <div class="card" style="padding: 0; overflow: hidden;">
+    {% if responses|length == 0 %}
+      <div style="padding: 3rem 1.5rem; text-align: center; color: var(--text-muted);">
+        <p style="font-size: 1.1rem; font-weight: 700;">No Submissions Yet</p>
+        <p style="font-size: 0.85rem; margin-top: 0.25rem;">
+          When students take this test via the public link, their attempts will appear here automatically.
+        </p>
+      </div>
+    {% else %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+          <thead>
+            <tr style="background: #f8fafc; border-bottom: 1px solid var(--border-light); font-weight: 700; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">
+              <th style="padding: 0.85rem 1rem;">Student</th>
+              <th style="padding: 0.85rem 1rem;">Roll No</th>
+              <th style="padding: 0.85rem 1rem;">Class</th>
+              <th style="padding: 0.85rem 1rem;">Score</th>
+              <th style="padding: 0.85rem 1rem;">Percentage</th>
+              <th style="padding: 0.85rem 1rem;">Result</th>
+              <th style="padding: 0.85rem 1rem;">Certificate</th>
+              <th style="padding: 0.85rem 1rem;">Date</th>
+              <th style="padding: 0.85rem 1rem; text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in responses %}
+              <tr style="border-bottom: 1px solid var(--border-light); transition: background 0.15s ease;">
+                <td style="padding: 0.85rem 1rem; font-weight: 700; color: var(--text-main);">
+                  {{ r.student_name }}
+                  {% if r.student_email %}
+                    <div style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);">{{ r.student_email }}</div>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.85rem 1rem; font-mono;">{{ r.roll_number or '—' }}</td>
+                <td style="padding: 0.85rem 1rem;">{{ r.student_class or '—' }}</td>
+                <td style="padding: 0.85rem 1rem; font-weight: 700;">{{ r.score }} / {{ r.total_marks }}</td>
+                <td style="padding: 0.85rem 1rem; font-weight: 700;">{{ r.percentage }}%</td>
+                <td style="padding: 0.85rem 1rem;">
+                  <span class="badge {% if r.passed %}badge-success{% else %}badge-danger{% endif %}">
+                    {{ 'PASS' if r.passed else 'FAIL' }}
+                  </span>
+                </td>
+                <td style="padding: 0.85rem 1rem;">
+                  {% if r.certificate_id %}
+                    <a href="{{ url_for('certificates.download_certificate', certificate_id=r.certificate_id) }}" class="btn btn-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.45rem;">
+                      📜 Download PDF
+                    </a>
+                  {% else %}
+                    <span style="color: var(--text-muted); font-size: 0.75rem;">—</span>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.85rem 1rem; font-size: 0.75rem; color: var(--text-muted);">
+                  {{ r.submitted_at.strftime('%d %b %Y, %H:%M') if r.submitted_at else '' }}
+                </td>
+                <td style="padding: 0.85rem 1rem; text-align: right;">
+                  <a href="{{ url_for('results.response_detail', test_id=test.test_id, response_id=r.response_id) }}" class="btn btn-secondary btn-sm">
+                    🔍 View
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

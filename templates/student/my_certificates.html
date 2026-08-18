@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}My Certificates — Student Portal{% endblock %}
+
+{% block content %}
+<div style="max-width: 750px; margin: 0 auto;">
+  <!-- Header -->
+  <div class="card" style="padding: 2rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <div class="brand-icon" style="width: 48px; height: 48px; font-size: 1.5rem;">
+        📜
+      </div>
+      <div>
+        <h1 style="font-size: 1.5rem; font-weight: 850; color: var(--text-main);">My Certificates</h1>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+          Look up, view, and download official certificates of achievement earned from your assessments.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search by Certificate ID -->
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <form method="GET" action="{{ url_for('student.my_certificates') }}">
+      <label class="form-label" for="lookup-id">Enter Certificate ID</label>
+      <div style="display: flex; gap: 0.5rem;">
+        <input
+          type="text"
+          id="lookup-id"
+          name="id"
+          class="form-control"
+          placeholder="e.g. CERT-2026-AB12CD"
+          value="{{ lookup_id }}"
+          style="font-family: monospace; font-size: 0.95rem; font-weight: 700; text-transform: uppercase;"
+          required
+        />
+        <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.25rem;">
+          🔍 Look Up
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Result Found Card -->
+  {% if cert %}
+    <div class="card" style="border: 2px solid var(--primary); padding: 1.75rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+        <div>
+          <span class="badge badge-success">✓ Verified & Authentic</span>
+          <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin-top: 0.4rem;">
+            {{ cert.test_title }}
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">
+            Awarded to: <strong style="color: var(--text-main);">{{ cert.student_name }}</strong>
+          </p>
+        </div>
+
+        <span style="font-family: monospace; font-size: 0.8rem; font-weight: 700; color: var(--primary);">
+          {{ cert.certificate_id }}
+        </span>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; margin-bottom: 1.25rem; color: var(--text-muted);">
+        <span>Score: <strong>{{ cert.score }}/{{ cert.total_marks }}</strong></span>
+        <span>•</span>
+        <span>Percentage: <strong>{{ cert.percentage }}%</strong></span>
+        <span>•</span>
+        <span>Issued Date: <strong>{{ cert.generated_date.strftime('%d %B %Y') if cert.generated_date else '' }}</strong></span>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ url_for('certificates.download_certificate', certificate_id=cert.certificate_id) }}" class="btn btn-primary">
+          📥 Download PDF Certificate
+        </a>
+        <a href="{{ url_for('certificates.view_certificate', certificate_id=cert.certificate_id) }}" target="_blank" class="btn btn-secondary">
+          👁️ View Web Certificate
+        </a>
+        <a href="{{ url_for('certificates.verify_certificate', certificate_id=cert.certificate_id) }}" target="_blank" class="btn btn-secondary">
+          🛡️ Verification Page
+        </a>
+      </div>
+    </div>
+  {% elif lookup_id %}
+    <div class="card" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
+      <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">Certificate Not Found</h3>
+      <p style="font-size: 0.85rem; margin-top: 0.25rem;">
+        No active certificate was found with ID "<strong>{{ lookup_id }}</strong>". Please check your spelling and try again.
+      </p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

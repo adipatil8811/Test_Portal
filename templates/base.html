@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Online Test & Certificate Platform{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="{{ url_for('admin.dashboard') if session.get('admin_logged_in') else url_for('auth.login') }}" class="nav-brand">
+        <div class="brand-icon">🎓</div>
+        <span>{{ config.get('PORTAL_NAME', 'Test Portal') }}</span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          {% if session.get('admin_logged_in') %}
+            <li><a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">📊 Dashboard</a></li>
+            <li><a href="{{ url_for('admin.create_test') }}" class="nav-link {% if request.endpoint == 'admin.create_test' %}active{% endif %}">➕ Create Test</a></li>
+            <li><a href="{{ url_for('certificates.admin_certificates') }}" class="nav-link {% if request.endpoint == 'certificates.admin_certificates' %}active{% endif %}">📜 Certificates</a></li>
+            <li><a href="{{ url_for('student.my_certificates') }}" class="nav-link" target="_blank">🎒 Student Portal</a></li>
+            <li><a href="{{ url_for('auth.logout') }}" class="nav-link danger">🚪 Logout</a></li>
+          {% else %}
+            <li><a href="{{ url_for('student.my_certificates') }}" class="nav-link">📜 Student Certificates</a></li>
+            <li><a href="{{ url_for('auth.login') }}" class="nav-link active">👨‍🏫 Teacher Sign In</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+    <!-- Flash Alerts -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

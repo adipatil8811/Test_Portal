@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error (500) — {{ config.get('PORTAL_NAME', 'Test Portal') }}{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width: 500px; text-align: center;">
+  <div class="card" style="padding: 3rem 1.5rem;">
+    <div style="font-size: 3rem; margin-bottom: 0.5rem;">⚙️</div>
+    <h1 style="font-size: 1.5rem; font-weight: 850; color: var(--text-main); margin-bottom: 0.5rem;">
+      Server Error (500)
+    </h1>
+    <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;">
+      Something unexpected occurred on our end. Please refresh or try again in a few moments.
+    </p>
+
+    <a href="{{ url_for('admin.dashboard') if session.get('admin_logged_in') else url_for('auth.login') }}" class="btn btn-primary">
+      Return to Home
+    </a>
+  </div>
+</div>
+{% endblock %}

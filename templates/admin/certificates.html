@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Certificates Management — Teacher Portal{% endblock %}
+
+{% block content %}
+<div style="max-width: 1050px; margin: 0 auto;">
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+    <div>
+      <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">Issued Certificates</h1>
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.15rem;">
+        Track, verify, download, and manage official student certificates.
+      </p>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+      <div class="stat-title">Total Certificates</div>
+      <div class="stat-value">{{ stats.total }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Active & Valid</div>
+      <div class="stat-value" style="color: var(--success);">{{ stats.active }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Revoked</div>
+      <div class="stat-value" style="color: var(--danger);">{{ stats.revoked }}</div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+    <!-- Filter Tabs -->
+    <div style="display: flex; gap: 0.4rem;">
+      <a href="{{ url_for('certificates.admin_certificates', status='all', search=search) }}" class="btn btn-sm {% if status_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">
+        All ({{ stats.total }})
+      </a>
+      <a href="{{ url_for('certificates.admin_certificates', status='active', search=search) }}" class="btn btn-sm {% if status_filter == 'active' %}btn-primary{% else %}btn-secondary{% endif %}">
+        Active ({{ stats.active }})
+      </a>
+      <a href="{{ url_for('certificates.admin_certificates', status='revoked', search=search) }}" class="btn btn-sm {% if status_filter == 'revoked' %}btn-primary{% else %}btn-secondary{% endif %}">
+        Revoked ({{ stats.revoked }})
+      </a>
+    </div>
+
+    <!-- Search Input -->
+    <form method="GET" action="{{ url_for('certificates.admin_certificates') }}" style="display: flex; gap: 0.4rem;">
+      <input type="hidden" name="status" value="{{ status_filter }}">
+      <input type="text" name="search" class="form-control" placeholder="Search by student, ID, test..." value="{{ search }}" style="width: 250px; padding: 0.35rem 0.65rem; font-size: 0.8rem;" />
+      <button type="submit" class="btn btn-primary btn-sm">Search</button>
+      {% if search %}
+        <a href="{{ url_for('certificates.admin_certificates', status=status_filter) }}" class="btn btn-secondary btn-sm">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Certificates Table -->
+  <div class="card" style="padding: 0; overflow: hidden;">
+    {% if certificates|length == 0 %}
+      <div style="padding: 3.5rem 1.5rem; text-align: center; color: var(--text-muted);">
+        <p style="font-size: 1.1rem; font-weight: 700;">No Certificates Found</p>
+        <p style="font-size: 0.85rem; margin-top: 0.25rem;">
+          When students pass qualifying assessments, certificates will appear here.
+        </p>
+      </div>
+    {% else %}
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+          <thead>
+            <tr style="background: #f8fafc; border-bottom: 1px solid var(--border-light); font-weight: 700; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">
+              <th style="padding: 0.85rem 1rem;">Certificate ID</th>
+              <th style="padding: 0.85rem 1rem;">Student</th>
+              <th style="padding: 0.85rem 1rem;">Test Title</th>
+              <th style="padding: 0.85rem 1rem;">Score</th>
+              <th style="padding: 0.85rem 1rem;">Status</th>
+              <th style="padding: 0.85rem 1rem;">Issued Date</th>
+              <th style="padding: 0.85rem 1rem; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cert in certificates %}
+              <tr style="border-bottom: 1px solid var(--border-light);">
+                <td style="padding: 0.85rem 1rem; font-family: monospace; font-weight: 700; color: var(--primary);">
+                  {{ cert.certificate_id }}
+                </td>
+                <td style="padding: 0.85rem 1rem; font-weight: 700; color: var(--text-main);">
+                  {{ cert.student_name }}
+                  {% if cert.student_email %}
+                    <div style="font-size: 0.75rem; font-weight: 400; color: var(--text-muted);">{{ cert.student_email }}</div>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.85rem 1rem; font-weight: 600;">
+                  {{ cert.test_title }}
+                </td>
+                <td style="padding: 0.85rem 1rem; font-weight: 700;">
+                  {{ cert.score }}/{{ cert.total_marks }} ({{ cert.percentage }}%)
+                </td>
+                <td style="padding: 0.85rem 1rem;">
+                  <span class="badge {% if not cert.is_revoked %}badge-success{% else %}badge-danger{% endif %}">
+                    {{ 'VALID' if not cert.is_revoked else 'REVOKED' }}
+                  </span>
+                  {% if cert.is_revoked and cert.revoke_reason %}
+                    <div style="font-size: 0.7rem; color: var(--danger-text); margin-top: 0.2rem;">Reason: {{ cert.revoke_reason }}</div>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.85rem 1rem; font-size: 0.75rem; color: var(--text-muted);">
+                  {{ cert.generated_date.strftime('%d %b %Y') if cert.generated_date else '' }}
+                </td>
+                <td style="padding: 0.85rem 1rem; text-align: right;">
+                  <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
+                    <a href="{{ url_for('certificates.view_certificate', certificate_id=cert.certificate_id) }}" target="_blank" class="btn btn-secondary btn-sm" title="View Web Certificate">
+                      👁️
+                    </a>
+                    <a href="{{ url_for('certificates.download_certificate', certificate_id=cert.certificate_id) }}" class="btn btn-primary btn-sm" title="Download High-Res PDF">
+                      📥 PDF
+                    </a>
+                    
+                    {% if not cert.is_revoked %}
+                      <form method="POST" action="{{ url_for('certificates.revoke_certificate', certificate_id=cert.certificate_id) }}" onsubmit="const r = prompt('Reason for revoking this certificate:'); if(r){ this.reason.value = r; return true; } return false;">
+                        <input type="hidden" name="reason" value="">
+                        <button type="submit" class="btn btn-danger btn-sm" title="Revoke Certificate">
+                          ⛔ Revoke
+                        </button>
+                      </form>
+                    {% else %}
+                      <form method="POST" action="{{ url_for('certificates.reinstate_certificate', certificate_id=cert.certificate_id) }}" onsubmit="return confirm('Reinstate this certificate?');">
+                        <button type="submit" class="btn btn-success btn-sm" title="Reinstate Certificate">
+                          ✓ Reinstate
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

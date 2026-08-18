@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Test' if not is_new else 'Create New Test' }} — Teacher Portal{% endblock %}
+
+{% block content %}
+<div class="test-builder-container" style="max-width: 900px; margin: 0 auto;">
+  <input type="hidden" id="test-id" value="{{ new_test_id }}">
+
+  <!-- Top Sticky Header -->
+  <div style="background: #ffffff; border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 1.15rem 1.35rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; position: sticky; top: 70px; z-index: 30; box-shadow: var(--shadow-sm);">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-sm" title="Back to Dashboard">
+        ← Back
+      </a>
+      <div>
+        <h1 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">
+          {{ 'Edit Test' if not is_new else 'Create Test' }}
+        </h1>
+        <span id="save-status" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;"></span>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+      <span id="total-marks-badge" class="badge badge-primary">0 Marks</span>
+
+      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSettingsModal()">
+        ⚙️ Settings
+      </button>
+
+      {% if not is_new and test %}
+        <a href="{{ url_for('student.take_test', test_id=test.test_id, preview='true') }}" target="_blank" class="btn btn-secondary btn-sm">
+          👁️ Preview
+        </a>
+      {% endif %}
+
+      <button type="button" class="btn btn-secondary btn-sm" onclick="saveDraftTest()">
+        💾 Save Draft
+      </button>
+
+      <button type="button" class="btn btn-success btn-sm" onclick="publishTestWithValidation('{{ new_test_id }}')">
+        🚀 {{ 'Update & Publish' if not is_new else 'Publish Test' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Primary Test Details Card -->
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <div class="form-group">
+      <label class="form-label" for="test-title">Test Title *</label>
+      <input
+        type="text"
+        id="test-title"
+        class="form-control"
+        placeholder="e.g. Science Chapter 4: Light & Reflection"
+        value="{{ test.title if test else '' }}"
+        style="font-size: 1.1rem; font-weight: 700;"
+        required
+      />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="test-subject">Subject</label>
+        <input type="text" id="test-subject" class="form-control" placeholder="e.g. Physics" value="{{ test.subject if test else '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="test-class">Class / Grade</label>
+        <input type="text" id="test-class" class="form-control" placeholder="e.g. Class 10" value="{{ test.class_name if test else '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="test-duration">Duration (Minutes)</label>
+        <input type="number" min="0" max="300" id="test-duration" class="form-control" placeholder="0 = unlimited" value="{{ test.duration if test else 0 }}" />
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0;">
+      <label class="form-label" for="test-description">Instructions for Students (Optional)</label>
+      <textarea id="test-description" class="form-control" rows="2" placeholder="e.g. Read each question carefully. Passing marks: 40%...">{{ test.description if test else '' }}</textarea>
+    </div>
+  </div>
+
+  <!-- Settings Collapse / Modal -->
+  <div id="settings-card" class="card" style="display: none; margin-bottom: 1.5rem; background: #fdfdfd; border-color: var(--primary-border);">
+    <h3 style="font-size: 1rem; font-weight: 800; margin-bottom: 1rem; color: var(--primary-text);">⚙️ Assessment & Certificate Settings</h3>
+    
+    <div class="form-row" style="margin-bottom: 1rem;">
+      <div class="form-group">
+        <label class="form-label" for="test-start-date">Start Date & Time (Optional)</label>
+        <input type="datetime-local" id="test-start-date" class="form-control" value="{{ test.start_date if test else '' }}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="test-end-date">End Date & Time (Optional)</label>
+        <input type="datetime-local" id="test-end-date" class="form-control" value="{{ test.end_date if test else '' }}" />
+      </div>
+    </div>
+
+    <!-- Certificate Settings -->
+    <div style="background: #ffffff; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+      <label class="choice-label" style="font-weight: 700; margin-bottom: 0.5rem;">
+        <input type="checkbox" id="test-enable-cert" {% if not test or test.enable_certificate %}checked{% endif %}>
+        Enable Official PDF Certificate on Passing
+      </label>
+
+      <div class="form-row" style="margin-top: 0.75rem;">
+        <div class="form-group">
+          <label class="form-label" for="test-cert-min-pct">Passing Percentage Required (%)</label>
+          <input type="number" min="1" max="100" id="test-cert-min-pct" class="form-control" value="{{ test.certificate_min_percentage if test else 40 }}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="test-institute-name">Institute / School Name</label>
+          <input type="text" id="test-institute-name" class="form-control" placeholder="e.g. Model High School" value="{{ test.institute_name if test else config.get('INSTITUTE_NAME', '') }}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="test-cert-template">Certificate Visual Theme</label>
+          <select id="test-cert-template" class="form-control form-select">
+            <option value="classic" {% if test and test.certificate_template == 'classic' %}selected{% endif %}>Classic Royal (Navy & Gold)</option>
+            <option value="academic" {% if test and test.certificate_template == 'academic' %}selected{% endif %}>Academic Emerald (Green & Gold)</option>
+            <option value="modern" {% if test and test.certificate_template == 'modern' %}selected{% endif %}>Modern Minimal (Slate & Indigo)</option>
+            <option value="gold" {% if test and test.certificate_template == 'gold' %}selected{% endif %}>Imperial Gold (Rich Gold)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Questions Section -->
+  <div style="margin-bottom: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">Questions</h2>
+      <button type="button" class="btn btn-primary btn-sm" onclick="addQuestion()">
+        ➕ Add Question
+      </button>
+    </div>
+
+    <!-- Questions Container -->
+    <div id="questions-container"></div>
+
+    <button type="button" class="btn btn-secondary btn-block" onclick="addQuestion()" style="margin-top: 1rem; padding: 0.85rem; border-style: dashed; font-weight: 700;">
+      ➕ Add Another Question
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/test_builder.js') }}"></script>
+<script>
+  function toggleSettingsModal() {
+    const el = document.getElementById("settings-card");
+    if (el) el.style.display = el.style.display === "none" ? "block" : "none";
+  }
+
+  // Pass existing questions from server
+  const existingQuestions = {{ (test.to_dict()['questions'] if test else [])|tojson }};
+  document.addEventListener("DOMContentLoaded", () => {
+    initTestBuilder(existingQuestions);
+  });
+</script>
+{% endblock %}

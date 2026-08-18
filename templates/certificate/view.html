@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Certificate — {{ cert.student_name }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+  <!-- Actions Bar -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <span class="badge {% if not cert.is_revoked %}badge-success{% else %}badge-danger{% endif %}" style="font-size: 0.85rem;">
+        {{ '✓ OFFICIAL & VERIFIED' if not cert.is_revoked else '⛔ REVOKED' }}
+      </span>
+      <span style="font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">
+        {{ cert.certificate_id }}
+      </span>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="{{ url_for('certificates.download_certificate', certificate_id=cert.certificate_id) }}" class="btn btn-primary">
+        📥 Download High-Resolution A4 PDF
+      </a>
+      <a href="{{ url_for('certificates.verify_certificate', certificate_id=cert.certificate_id) }}" target="_blank" class="btn btn-secondary">
+        🛡️ Verify
+      </a>
+    </div>
+  </div>
+
+  <!-- Ornate Certificate Canvas Container -->
+  <div class="card" style="padding: 3rem 2.5rem; text-align: center; border: 8px double {% if cert.certificate_template == 'academic' %}#064e3b{% elif cert.certificate_template == 'modern' %}#1e293b{% elif cert.certificate_template == 'gold' %}#92400e{% else %}#1e1b4b{% endif %}; background: #fdfdfd; box-shadow: var(--shadow-lg);">
+    
+    <!-- Institute Header -->
+    <div style="font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #4338ca; margin-bottom: 0.5rem;">
+      {{ cert.institute_name or 'Online Test Academy' }}
+    </div>
+
+    <!-- Certificate Title -->
+    <h1 style="font-size: 2rem; font-weight: 900; text-transform: uppercase; color: #1e1b4b; letter-spacing: 0.05em; font-family: 'Times New Roman', serif;">
+      {{ cert.certificate_title or 'Certificate of Achievement' }}
+    </h1>
+
+    <div style="width: 140px; height: 2px; background: #d97706; margin: 0.5rem auto 1.5rem auto;"></div>
+
+    <p style="font-size: 0.95rem; font-style: italic; color: #64748b; margin-bottom: 0.5rem; font-family: 'Times New Roman', serif;">
+      This is proudly presented to
+    </p>
+
+    <!-- Student Name -->
+    <h2 style="font-size: 2.25rem; font-weight: 900; color: #1e1b4b; margin: 0.5rem 0 1rem 0; font-family: 'Times New Roman', serif; border-bottom: 2px solid #d97706; display: inline-block; padding-bottom: 0.25rem; min-width: 300px;">
+      {{ cert.student_name }}
+    </h2>
+
+    <!-- Description -->
+    <p style="font-size: 1.05rem; color: #374151; max-width: 600px; margin: 1rem auto 1.5rem auto; line-height: 1.6; font-family: 'Times New Roman', serif;">
+      For successfully completing the <strong>{{ cert.test_title }}</strong> assessment with a score of <strong>{{ cert.score }}/{{ cert.total_marks }}</strong> ({{ cert.percentage }}%).
+    </p>
+
+    <!-- Score Badge Pill -->
+    {% if cert.show_score or cert.show_percentage %}
+      <div style="display: inline-block; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: var(--radius-pill); padding: 0.4rem 1.25rem; font-size: 0.85rem; font-weight: 700; color: #1e1b4b; margin-bottom: 2rem;">
+        {% if cert.show_score %}Score: {{ cert.score }} / {{ cert.total_marks }}{% endif %}
+        {% if cert.show_score and cert.show_percentage %} • {% endif %}
+        {% if cert.show_percentage %}Percentage: {{ cert.percentage }}%{% endif %}
+      </div>
+    {% endif %}
+
+    <!-- Bottom Signature & ID Footer -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 1.5rem; border-top: 1px solid #e2e8f0; margin-top: 1.5rem;">
+      <div style="text-align: left;">
+        <span style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Issue Date</span>
+        <div style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">
+          {{ cert.generated_date.strftime('%d %B %Y') if cert.generated_date else '' }}
+        </div>
+        <div style="font-family: monospace; font-size: 0.75rem; color: #4338ca; font-weight: 700; margin-top: 0.2rem;">
+          ID: {{ cert.certificate_id }}
+        </div>
+      </div>
+
+      <!-- Center Gold Seal -->
+      <div style="width: 54px; height: 54px; border-radius: 50%; background: #d97706; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; border: 2px dashed #fef3c7; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        VERIFIED
+      </div>
+
+      <div style="text-align: right;">
+        <div style="border-bottom: 1px solid #94a3b8; width: 140px; margin-bottom: 0.35rem; font-style: italic; font-family: 'Times New Roman', serif; font-size: 1rem;">
+          {{ cert.institute_name or 'Authorized Sign' }}
+        </div>
+        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">
+          {{ cert.teacher_signer_title or 'Authorized Instructor' }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

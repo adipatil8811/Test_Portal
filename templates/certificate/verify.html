@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Certificate Verification — {{ certificate_id }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 650px; margin: 2rem auto;">
+  <div class="card" style="padding: 2.25rem;">
+    
+    <!-- Top Verification Header -->
+    <div style="text-align: center; margin-bottom: 1.75rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1.25rem;">
+      <div style="width: 50px; height: 50px; border-radius: var(--radius-lg); background: {% if cert and not cert.is_revoked %}var(--success-bg){% else %}var(--danger-bg){% endif %}; color: {% if cert and not cert.is_revoked %}var(--success){% else %}var(--danger){% endif %}; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 0.75rem auto;">
+        {% if cert and not cert.is_revoked %}🛡️{% else %}⚠️{% endif %}
+      </div>
+
+      {% if cert and not cert.is_revoked %}
+        <span class="badge badge-success" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">
+          ✓ OFFICIAL CERTIFICATE VERIFIED
+        </span>
+        <h1 style="font-size: 1.4rem; font-weight: 850; color: var(--text-main); margin-top: 0.5rem;">
+          Authentic Credential
+        </h1>
+      {% elif cert and cert.is_revoked %}
+        <span class="badge badge-danger" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">
+          ⛔ CERTIFICATE REVOKED
+        </span>
+        <h1 style="font-size: 1.4rem; font-weight: 850; color: var(--danger-text); margin-top: 0.5rem;">
+          This Certificate Has Been Revoked
+        </h1>
+        {% if cert.revoke_reason %}
+          <p style="font-size: 0.85rem; color: var(--danger-text); margin-top: 0.35rem;">
+            Reason: {{ cert.revoke_reason }}
+          </p>
+        {% endif %}
+      {% else %}
+        <span class="badge badge-danger" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">
+          RECORD NOT FOUND
+        </span>
+        <h1 style="font-size: 1.4rem; font-weight: 850; color: var(--text-main); margin-top: 0.5rem;">
+          Certificate Not Found
+        </h1>
+      {% endif %}
+    </div>
+
+    {% if cert %}
+      <!-- Credential Information Table -->
+      <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.9rem; margin-bottom: 1.75rem;">
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-light); padding-bottom: 0.5rem;">
+          <span style="color: var(--text-muted); font-weight: 600;">Certificate ID:</span>
+          <span style="font-family: monospace; font-weight: 700; color: var(--primary);">{{ cert.certificate_id }}</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-light); padding-bottom: 0.5rem;">
+          <span style="color: var(--text-muted); font-weight: 600;">Student Name:</span>
+          <strong style="color: var(--text-main);">{{ cert.student_name }}</strong>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-light); padding-bottom: 0.5rem;">
+          <span style="color: var(--text-muted); font-weight: 600;">Assessment:</span>
+          <strong style="color: var(--text-main);">{{ cert.test_title }}</strong>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-light); padding-bottom: 0.5rem;">
+          <span style="color: var(--text-muted); font-weight: 600;">Score & Percentage:</span>
+          <strong style="color: var(--success-text);">{{ cert.score }}/{{ cert.total_marks }} ({{ cert.percentage }}%)</strong>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-light); padding-bottom: 0.5rem;">
+          <span style="color: var(--text-muted); font-weight: 600;">Issue Date:</span>
+          <span>{{ cert.generated_date.strftime('%d %B %Y') if cert.generated_date else '' }}</span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-muted); font-weight: 600;">Issuing Institute:</span>
+          <span>{{ cert.institute_name or 'Online Test Academy' }}</span>
+        </div>
+      </div>
+
+      {% if not cert.is_revoked %}
+        <div style="text-align: center; border-top: 1px solid var(--border-light); padding-top: 1.25rem;">
+          <a href="{{ url_for('certificates.download_certificate', certificate_id=cert.certificate_id) }}" class="btn btn-primary btn-block">
+            📥 Download Verified PDF Certificate
+          </a>
+        </div>
+      {% endif %}
+    {% else %}
+      <div style="text-align: center; color: var(--text-muted); padding: 1rem 0;">
+        <p style="font-size: 0.85rem; margin-bottom: 1.25rem;">
+          No certificate matching ID "<strong>{{ certificate_id }}</strong>" exists in our database.
+        </p>
+        <a href="{{ url_for('student.my_certificates') }}" class="btn btn-secondary btn-sm">
+          ← Look Up Another Certificate
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Result: {{ test.title }} — {{ student_name }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 850px; margin: 0 auto;">
+  <!-- Result Score Banner Card -->
+  <div class="card" style="text-align: center; padding: 2.5rem 1.5rem; margin-bottom: 1.5rem; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
+    {% if result.passed %}
+      <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+      <span class="badge badge-success" style="font-size: 0.95rem; padding: 0.4rem 1rem;">
+        PASSED ASSESSMENT
+      </span>
+      <h1 style="font-size: 1.75rem; font-weight: 850; color: var(--text-main); margin-top: 0.6rem;">
+        Congratulations, {{ student_name }}!
+      </h1>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.25rem;">
+        You have successfully completed <strong>{{ test.title }}</strong>.
+      </p>
+    {% else %}
+      <div style="font-size: 3rem; margin-bottom: 0.5rem;">📚</div>
+      <span class="badge badge-danger" style="font-size: 0.95rem; padding: 0.4rem 1rem;">
+        NEEDS IMPROVEMENT
+      </span>
+      <h1 style="font-size: 1.75rem; font-weight: 850; color: var(--text-main); margin-top: 0.6rem;">
+        Assessment Completed, {{ student_name }}
+      </h1>
+      <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.25rem;">
+        You scored below the passing threshold ({{ test.certificate_min_percentage }}%). Keep learning and try again!
+      </p>
+    {% endif %}
+
+    <!-- Big Score Display -->
+    <div style="margin: 1.5rem 0 1.25rem 0;">
+      <div style="font-size: 3rem; font-weight: 900; color: {% if result.passed %}var(--success-text){% else %}var(--text-main){% endif %}; line-height: 1;">
+        {{ result.score }} <span style="font-size: 1.5rem; font-weight: 600; color: var(--text-muted);">/ {{ result.totalMarks }}</span>
+      </div>
+      <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-muted); margin-top: 0.4rem;">
+        {{ result.percentage }}% Score
+      </div>
+    </div>
+
+    <!-- 4 Stats Cards -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; max-width: 550px; margin: 0 auto; text-align: center;">
+      <div style="background: #ffffff; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+        <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);">QUESTIONS</div>
+        <div style="font-size: 1.25rem; font-weight: 800;">{{ result.totalQuestions }}</div>
+      </div>
+      <div style="background: var(--success-bg); padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--success-border);">
+        <div style="font-size: 0.7rem; font-weight: 700; color: var(--success-text);">CORRECT</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: var(--success-text);">{{ result.correctCount }}</div>
+      </div>
+      <div style="background: var(--danger-bg); padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--danger-border);">
+        <div style="font-size: 0.7rem; font-weight: 700; color: var(--danger-text);">INCORRECT</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: var(--danger-text);">{{ result.incorrectCount }}</div>
+      </div>
+      <div style="background: #f1f5f9; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid #cbd5e1;">
+        <div style="font-size: 0.7rem; font-weight: 700; color: #64748b);">UNANSWERED</div>
+        <div style="font-size: 1.25rem; font-weight: 800; color: #475569;">{{ result.unansweredCount }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Official Certificate Card (If passed) -->
+  {% if certificate and not is_preview %}
+    <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #1e1b4b, #3730a3); color: #ffffff; padding: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <span class="badge" style="background: #fbbf24; color: #78350f; font-weight: 800; margin-bottom: 0.5rem;">
+            🏆 OFFICIAL CERTIFICATE ISSUED
+          </span>
+          <h2 style="font-size: 1.5rem; font-weight: 800; margin: 0.35rem 0 0.2rem 0;">
+            {{ certificate.certificate_title or 'Certificate of Achievement' }}
+          </h2>
+          <p style="font-size: 0.85rem; color: #c7d2fe; margin-bottom: 0.75rem;">
+            Certificate ID: <strong style="font-family: monospace; color: #ffffff;">{{ certificate.certificate_id }}</strong>
+          </p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <a href="{{ url_for('certificates.download_certificate', certificate_id=certificate.certificate_id) }}" class="btn btn-warning" style="background: #fbbf24; color: #78350f; font-weight: 800; padding: 0.75rem 1.35rem; font-size: 0.95rem;">
+            📥 Download A4 PDF Certificate
+          </a>
+          <a href="{{ url_for('certificates.view_certificate', certificate_id=certificate.certificate_id) }}" target="_blank" class="btn btn-secondary btn-sm" style="background: rgba(255,255,255,0.15); color: #ffffff; border-color: rgba(255,255,255,0.3); text-align: center;">
+            👁️ View Online Certificate
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Question-by-Question Solution Review -->
+  {% if test.show_result %}
+    <div style="margin-top: 2rem;">
+      <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem;">
+        Question-by-Question Review
+      </h2>
+
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for item in result.questionReviews %}
+          <div class="card" style="border-left: 4px solid {% if item.isCorrect %}var(--success){% elif item.marksObtained < 0 %}var(--danger){% else %}#94a3b8{% endif %};">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+              <span class="badge {% if item.isCorrect %}badge-success{% else %}badge-danger{% endif %}">
+                Question {{ item.questionNumber }}
+              </span>
+              <span style="font-size: 0.8rem; font-weight: 800; color: {% if item.isCorrect %}var(--success-text){% else %}var(--danger-text){% endif %};">
+                {{ item.marksObtained }} / {{ item.marks }} Marks
+              </span>
+            </div>
+
+            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem;">
+              {{ item.question }}
+            </h3>
+
+            <div style="background: #f8fafc; padding: 0.75rem; border-radius: var(--radius-md); font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem;">
+              <div>
+                <span style="font-weight: 700; color: var(--text-muted);">Your Answer:</span>
+                <strong style="color: {% if item.isCorrect %}var(--success-text){% else %}var(--danger-text){% endif %};">
+                  {{ item.studentAnswer if item.studentAnswer else '(No answer given)' }}
+                </strong>
+              </div>
+
+              {% if not item.isCorrect and item.correctAnswer %}
+                <div>
+                  <span style="font-weight: 700; color: var(--text-muted);">Correct Answer:</span>
+                  <strong style="color: var(--success-text);">
+                    {{ item.correctAnswer }}
+                  </strong>
+                </div>
+              {% endif %}
+            </div>
+
+            {% if item.explanation %}
+              <div style="margin-top: 0.6rem; font-size: 0.8rem; color: #475569; background: #fffbeb; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid #fde68a;">
+                💡 <strong>Explanation:</strong> {{ item.explanation }}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
