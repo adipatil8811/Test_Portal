@@ -29,7 +29,7 @@ def logout_admin():
 
 def verify_admin_password(password):
     """Verify admin password against environment or database"""
-    expected_password = current_app.config.get("ADMIN_PASSWORD", "secretteacherpassword")
+    expected_password = current_app.config.get("ADMIN_PASSWORD", "12345")
     if password == expected_password:
         return True
     

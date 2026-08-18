@@ -29,7 +29,7 @@ class Config:
     
     # Teacher Admin Authentication
     ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
-    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "secretteacherpassword")
+    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "12345")
     
     # Public Application Base URL
     # Automatically resolves VERCEL_URL if deployed on Vercel and APP_URL is not set

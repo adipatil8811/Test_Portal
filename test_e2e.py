@@ -20,7 +20,7 @@ class E2EWorkflowTestCase(unittest.TestCase):
         """End-to-end lifecycle test for teacher and student flows"""
         
         # 1. Teacher Login
-        login_res = self.client.post("/login", data={"password": "secretteacherpassword"}, follow_redirects=True)
+        login_res = self.client.post("/login", data={"password": "12345"}, follow_redirects=True)
         self.assertEqual(login_res.status_code, 200)
         self.assertIn(b"Teacher Dashboard", login_res.data)
 
