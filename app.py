@@ -200,39 +200,17 @@ class WSGIPrefixFix:
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
-        # 1. Reset SCRIPT_NAME to root
         environ["SCRIPT_NAME"] = ""
-
-        # 2. Extract original request path if routed through Vercel serverless rewrite
-        matched_path = (
-            environ.get("HTTP_X_MATCHED_PATH")
-            or environ.get("HTTP_X_FORWARDED_PATH")
-            or environ.get("HTTP_X_FORWARDED_URI")
-            or environ.get("x-matched-path")
-            or ""
-        )
-
         path = environ.get("PATH_INFO", "/") or "/"
 
-        if matched_path and matched_path not in ("/api/index", "/api/index.py", "/api", "/api/"):
-            path = matched_path
+        # If PATH_INFO is literally the serverless file endpoint, route to root
+        if path in ("/api/index.py", "/api/index", "/app.py", "/index.py", "/index", "/api", "/api/"):
+            path = "/"
+        elif path.startswith("/api/index.py/"):
+            path = path[len("/api/index.py"):]
+        elif path.startswith("/api/index/"):
+            path = path[len("/api/index"):]
 
-        # 3. Handle query string if attached to path
-        if "?" in path:
-            path, _, query = path.partition("?")
-            if query and not environ.get("QUERY_STRING"):
-                environ["QUERY_STRING"] = query
-
-        # 4. Strip any serverless file prefixes if present
-        for prefix in ("/api/index.py", "/api/index", "/app.py", "/index.py", "/index", "/api"):
-            if path == prefix:
-                path = "/"
-                break
-            elif path.startswith(prefix + "/"):
-                path = path[len(prefix):]
-                break
-
-        # 5. Clean up duplicate slashes and ensure leading slash
         while "//" in path:
             path = path.replace("//", "/")
 
