@@ -65,7 +65,7 @@ def seed_initial_data():
             published=True,
             enable_certificate=True,
             certificate_min_percentage=40,
-            institute_name="Online Test Academy",
+            institute_name="GVT",
             teacher_signer_title="Head Instructor",
             certificate_template="classic",
             certificate_title="Certificate of Achievement",

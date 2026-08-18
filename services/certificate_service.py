@@ -80,7 +80,7 @@ def generate_certificate_pdf(cert_data, verify_url=""):
     page_width, page_height = pagesizes.landscape(pagesizes.A4)
     c = canvas.Canvas(buffer, pagesize=(page_width, page_height))
     c.setTitle(f"Certificate - {cert_data.get('studentName', 'Student')}")
-    c.setAuthor(cert_data.get("instituteName", "Online Test Academy"))
+    c.setAuthor(cert_data.get("instituteName", "GVT"))
 
     theme_colors = get_theme_colors(cert_data.get("certificateTemplate", "classic"))
 
@@ -114,7 +114,7 @@ def generate_certificate_pdf(cert_data, verify_url=""):
         c.line(cx, cy, cx, cy + (sy * corner_size))
 
     # 5. Header: Institute Name
-    inst_name = (cert_data.get("instituteName") or "ONLINE TEST ACADEMY").upper()
+    inst_name = (cert_data.get("instituteName") or "GVT").upper()
     c.setFillColor(theme_colors["secondary"])
     c.setFont("Helvetica-Bold", 13)
     c.drawCentredString(page_width / 2.0, page_height - 68, inst_name)

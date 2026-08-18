@@ -39,4 +39,4 @@ class Config:
     
     # Portal Details
     PORTAL_NAME = os.getenv("PORTAL_NAME", "Online Test Portal")
-    INSTITUTE_NAME = os.getenv("INSTITUTE_NAME", "Online Test Academy")
+    INSTITUTE_NAME = os.getenv("INSTITUTE_NAME", "GVT")

@@ -92,7 +92,7 @@ def submit_test(test_id):
             score=eval_result["score"],
             total_marks=eval_result["totalMarks"],
             percentage=eval_result["percentage"],
-            institute_name=test.institute_name or "Online Test Academy",
+            institute_name=test.institute_name or "GVT",
             institute_logo=test.institute_logo,
             teacher_signature=test.teacher_signature,
             teacher_signer_title=test.teacher_signer_title or "Authorized Instructor",

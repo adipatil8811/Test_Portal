@@ -68,7 +68,7 @@ class TestPlatformTestCase(unittest.TestCase):
             "percentage": "100.0",
             "certificateId": "CERT-2026-TEST99",
             "date": "18 August 2026",
-            "instituteName": "Online Test Academy",
+            "instituteName": "GVT",
             "certificateTemplate": "classic",
         }
         pdf_bytes = generate_certificate_pdf(sample_data, verify_url="http://localhost:5000/verify/CERT-2026-TEST99")
