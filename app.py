@@ -1,6 +1,7 @@
 import os
 import json
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory
+from sqlalchemy import text
 from config import Config
 from models import db
 from models.test import Test
@@ -13,7 +14,7 @@ from utils.helpers import format_date, generate_test_id, generate_question_id
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def create_app(config_class=Config):
-    """Flask Application Factory"""
+    """Flask Application Factory with Production Security & Serverless Support"""
     app = Flask(
         __name__,
         template_folder=os.path.join(BASE_DIR, "templates"),
@@ -28,20 +29,51 @@ def create_app(config_class=Config):
     # Register Blueprints
     register_routes(app)
 
-    # Explicit static files route to guarantee static delivery on Vercel
+    # Health Check Endpoint
+    @app.route("/health", methods=["GET"])
+    def health_check():
+        """Public health check endpoint for monitoring & deployment validation"""
+        db_status = "connected"
+        db_healthy = True
+        try:
+            db.session.execute(text("SELECT 1"))
+        except Exception as e:
+            db_status = f"disconnected: {str(e)}"
+            db_healthy = False
+
+        status_code = 200 if db_healthy else 503
+        return jsonify({
+            "status": "ok" if db_healthy else "error",
+            "service": "Online Test Portal",
+            "institute": app.config.get("INSTITUTE_NAME", "GVT"),
+            "database": db_status,
+            "production": app.config.get("IS_PRODUCTION", False),
+        }), status_code
+
+    # Explicit Static Asset Delivery (Guarantees static file serving on Vercel)
     @app.route("/static/<path:filename>")
     @app.route("/api/static/<path:filename>")
     @app.route("/api/index/static/<path:filename>")
     def custom_static(filename):
         return send_from_directory(os.path.join(BASE_DIR, "static"), filename)
 
-    # Context Processors & Template Filters
+    # Production Security Headers Middleware
+    @app.after_request
+    def set_security_headers(response):
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
+        return response
+
+    # Global Template Context & Filters
     @app.context_processor
     def inject_globals():
         return {
             "is_admin": is_admin_authenticated(),
             "app_url": app.config.get("APP_URL", "http://localhost:5000"),
             "portal_name": app.config.get("PORTAL_NAME", "Online Test Portal"),
+            "institute_name": app.config.get("INSTITUTE_NAME", "GVT"),
         }
 
     @app.template_filter("format_date")
@@ -51,8 +83,8 @@ def create_app(config_class=Config):
     # Error Handlers
     @app.errorhandler(404)
     def page_not_found(e):
-        # If Vercel passed an unstripped serverless root path, route to home
         raw_path = (request.path or "").rstrip("/")
+        # If Vercel passed an unstripped serverless root path, route directly to home
         if raw_path in ("", "/api", "/api/index", "/index", "/index.py", "/api/index.py"):
             from routes.auth import index
             return index()
@@ -62,24 +94,26 @@ def create_app(config_class=Config):
     def internal_server_error(e):
         return render_template("errors/500.html"), 500
 
-    # Initialize Database Tables & Seed Demo Test if empty
+    # Initialize Database Tables Safely
     with app.app_context():
         try:
             db.create_all()
-            seed_initial_data()
+            if app.config.get("SEED_DEMO", False):
+                seed_initial_data()
         except Exception as err:
-            print("DB init note:", err)
+            # Don't crash worker on ephemeral connection glitch
+            print("Database setup notice:", err)
 
     return app
 
 def seed_initial_data():
-    """Seed initial sample test if database is fresh"""
+    """Seed initial sample test only when explicitly requested (SEED_DEMO=true)"""
     if Test.query.count() == 0:
         demo_test_id = "t_demo_science"
         sample_test = Test(
             test_id=demo_test_id,
             title="General Science & Physics Fundamentals",
-            description="Complete this 5-question assessment. Score 40% or higher to receive your verified Certificate of Achievement.",
+            description="Complete this 4-question assessment. Score 40% or higher to receive your verified Certificate of Achievement.",
             subject="Science",
             class_name="Class 10",
             duration=15,

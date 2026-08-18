@@ -12,6 +12,8 @@ class E2EWorkflowTestCase(unittest.TestCase):
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()
+        with self.app.app_context():
+            db.create_all()
 
     def tearDown(self):
         self.app_context.pop()

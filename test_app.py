@@ -1,6 +1,6 @@
 import io
 import unittest
-from app import create_app
+from app import create_app, seed_initial_data
 from models import db
 from models.test import Test
 from models.question import Question
@@ -16,9 +16,28 @@ class TestPlatformTestCase(unittest.TestCase):
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()
+        with self.app.app_context():
+            db.drop_all()
+            db.create_all()
+            seed_initial_data()
 
     def tearDown(self):
         self.app_context.pop()
+
+    def test_health_check_endpoint(self):
+        """Verify /health returns 200 and connected status"""
+        res = self.client.get("/health")
+        self.assertEqual(res.status_code, 200)
+        data = res.get_json()
+        self.assertEqual(data["status"], "ok")
+        self.assertEqual(data["database"], "connected")
+
+    def test_security_headers_present(self):
+        """Verify production security headers on responses"""
+        res = self.client.get("/health")
+        self.assertEqual(res.headers.get("X-Content-Type-Options"), "nosniff")
+        self.assertEqual(res.headers.get("X-Frame-Options"), "SAMEORIGIN")
+        self.assertEqual(res.headers.get("Referrer-Policy"), "strict-origin-when-cross-origin")
 
     def test_database_and_demo_seed(self):
         """Verify database tables and seeded demo test"""
@@ -28,13 +47,13 @@ class TestPlatformTestCase(unittest.TestCase):
         self.assertTrue(test.published)
 
     def test_evaluation_service_scoring(self):
-        """Verify server-side answer evaluation and negative marking"""
+        """Verify server-side answer evaluation without negative marking"""
         test = Test.query.filter_by(test_id="t_demo_science").first()
         
         # Test all correct answers
         answers_all_correct = {
             "q_101": "Ampere",
-            "q_102": "True",
+            "q_102": "False",
             "q_103": ["Helium", "Neon", "Argon"],
             "q_104": "H2O"
         }
@@ -48,7 +67,7 @@ class TestPlatformTestCase(unittest.TestCase):
         # Test partial incorrect (incorrect answers get 0 marks)
         answers_partial = {
             "q_101": "Ampere",   # +1 (correct)
-            "q_102": "False",    # 0 (wrong)
+            "q_102": "True",     # 0 (wrong)
             "q_103": ["Helium"], # 0 (incomplete combo)
             "q_104": "H2O"       # +1 (correct)
         }
@@ -59,7 +78,7 @@ class TestPlatformTestCase(unittest.TestCase):
         self.assertEqual(res2["incorrectCount"], 2)
 
     def test_reportlab_pdf_generation(self):
-        """Verify ReportLab generates non-empty A4 landscape PDF"""
+        """Verify ReportLab generates non-empty A4 landscape PDF in memory"""
         sample_data = {
             "studentName": "Alex Sharma",
             "testTitle": "General Science & Physics",

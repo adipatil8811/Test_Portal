@@ -24,7 +24,10 @@ def login():
 
     if request.method == "POST":
         password = request.form.get("password", "").strip()
-        next_url = request.args.get("next") or url_for("admin.dashboard")
+        next_url = request.args.get("next", "")
+        # Prevent open redirect: only allow safe relative URLs
+        if not next_url or not next_url.startswith("/") or next_url.startswith("//"):
+            next_url = url_for("admin.dashboard")
 
         if verify_admin_password(password):
             login_admin()

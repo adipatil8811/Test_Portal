@@ -9,11 +9,11 @@ if root_dir not in sys.path:
 
 from app import app as flask_app
 
-def app(environ, start_response):
+def wsgi_handler(environ, start_response):
     """
-    WSGI Entrypoint for Vercel Serverless Functions.
+    Production WSGI Entrypoint for Vercel Serverless Functions.
     Accurately reconstructs the original browser request path
-    from Vercel proxy headers and strips serverless routing prefixes.
+    from Vercel proxy headers and normalizes serverless routing prefixes.
     """
     # 1. Look for original requested URI in standard reverse proxy headers
     raw_uri = (
@@ -31,13 +31,13 @@ def app(environ, start_response):
     else:
         path = raw_uri
 
-    # 3. Strip any serverless handler prefixes added by Vercel rewrites
+    # 3. Strip serverless handler prefixes added by Vercel rewrites
     for prefix in ("/api/index.py", "/api/index", "/api"):
         if path == prefix:
             path = "/"
             break
         elif path.startswith(prefix + "/"):
-            # Don't strip /admin/api routes that legitimately belong to Flask
+            # Preserve /admin/api routes that legitimately belong to Flask
             if not path.startswith("/admin/api"):
                 path = path[len(prefix):]
                 break
@@ -47,3 +47,8 @@ def app(environ, start_response):
 
     environ["PATH_INFO"] = path
     return flask_app(environ, start_response)
+
+# Expose standard WSGI entrypoint symbols for Vercel Python runtime
+app = wsgi_handler
+handler = wsgi_handler
+application = wsgi_handler

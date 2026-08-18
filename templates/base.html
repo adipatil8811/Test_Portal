@@ -26,10 +26,10 @@
             <li><a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">📊 Dashboard</a></li>
             <li><a href="{{ url_for('admin.create_test') }}" class="nav-link {% if request.endpoint == 'admin.create_test' %}active{% endif %}">➕ Create Test</a></li>
             <li><a href="{{ url_for('certificates.admin_certificates') }}" class="nav-link {% if request.endpoint == 'certificates.admin_certificates' %}active{% endif %}">📜 Certificates</a></li>
-            <li><a href="{{ url_for('student.my_certificates') }}" class="nav-link" target="_blank">🎒 Student Portal</a></li>
+            <li><a href="{{ url_for('student.student_certificates') }}" class="nav-link" target="_blank">🎒 Student Portal</a></li>
             <li><a href="{{ url_for('auth.logout') }}" class="nav-link danger">🚪 Logout</a></li>
           {% else %}
-            <li><a href="{{ url_for('student.my_certificates') }}" class="nav-link">📜 Student Certificates</a></li>
+            <li><a href="{{ url_for('student.student_certificates') }}" class="nav-link">📜 Student Certificates</a></li>
             <li><a href="{{ url_for('auth.login') }}" class="nav-link active">👨‍🏫 Teacher Sign In</a></li>
           {% endif %}
         </ul>
