@@ -31,7 +31,7 @@ def create_app(config_class=Config):
         }
 
     @app.template_filter("format_date")
-    def filter_format_date(val, fmt="%d %B %Y"):
+    def filter_format_date(val, fmt="%d %B %Y"):    
         return format_date(val, fmt)
 
     # Error Handlers

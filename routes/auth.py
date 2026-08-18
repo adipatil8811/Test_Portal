@@ -4,6 +4,8 @@ from utils.security import is_admin_authenticated, login_admin, logout_admin, ve
 auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/")
+@auth_bp.route("/api")
+@auth_bp.route("/api/index")
 def index():
     """Homepage route"""
     if is_admin_authenticated():
