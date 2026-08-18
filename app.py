@@ -203,34 +203,23 @@ class WSGIPrefixFix:
         # 1. Reset SCRIPT_NAME to root
         environ["SCRIPT_NAME"] = ""
 
-        # 2. Extract and sanitize PATH_INFO
-        path = environ.get("PATH_INFO", "/")
-        if not path:
-            path = "/"
+        # 2. Extract PATH_INFO
+        path = environ.get("PATH_INFO", "/") or "/"
 
-        # 3. Check for proxy forwarded URI headers from Vercel
-        for header in ("HTTP_X_FORWARDED_URI", "HTTP_X_NOW_ROUTE", "RAW_URI", "REQUEST_URI"):
-            val = environ.get(header)
-            if val:
-                raw_path = val.split("?")[0]
-                if raw_path and not raw_path.startswith("/api/index"):
-                    path = raw_path
-                    break
+        # 3. Strip any serverless file prefixes if present
+        for prefix in ("/api/index.py", "/api/index", "/app.py"):
+            if path == prefix:
+                path = "/"
+                break
+            elif path.startswith(prefix + "/"):
+                path = path[len(prefix):]
+                break
 
         # 4. Remove duplicate slashes
         while "//" in path:
             path = path.replace("//", "/")
 
-        # 5. Strip any serverless prefixes added by Vercel rewrites
-        for prefix in ("/api/index.py", "/api/index", "/api", "/app.py"):
-            if path == prefix:
-                path = "/"
-                break
-            elif path.startswith(prefix + "/") and not path.startswith("/admin/api"):
-                path = path[len(prefix):]
-                break
-
-        if not path or not path.startswith("/"):
+        if not path.startswith("/"):
             path = "/" + path
 
         environ["PATH_INFO"] = path

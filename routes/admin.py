@@ -13,6 +13,7 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 @admin_bp.route("")
 @admin_bp.route("/")
+@admin_bp.route("/dashboard")
 @login_required
 def dashboard():
     """Teacher / Admin Dashboard Overview"""

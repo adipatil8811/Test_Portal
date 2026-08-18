@@ -19,11 +19,17 @@ class Config:
     
     # Public Application Base URL
     vercel_url = os.getenv("VERCEL_URL")
-    default_prod_url = f"https://{vercel_url}" if vercel_url else "http://localhost:5000"
+    render_external_url = os.getenv("RENDER_EXTERNAL_URL")
+    if render_external_url:
+        default_prod_url = render_external_url
+    elif vercel_url:
+        default_prod_url = f"https://{vercel_url}"
+    else:
+        default_prod_url = "http://localhost:5000"
     APP_URL = os.getenv("APP_URL", default_prod_url).rstrip("/")
     
-    # Enable HTTPS cookies in production or on Vercel
-    IS_PRODUCTION = bool(os.getenv("VERCEL") or APP_URL.startswith("https://"))
+    # Enable HTTPS cookies in production or on Vercel/Render
+    IS_PRODUCTION = bool(os.getenv("VERCEL") or os.getenv("RENDER") or APP_URL.startswith("https://"))
     SESSION_COOKIE_SECURE = IS_PRODUCTION
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
 

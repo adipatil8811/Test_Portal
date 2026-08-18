@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: test-portal
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        value: "12345"
+      - key: PORTAL_NAME
+        value: Online Test Portal
+      - key: INSTITUTE_NAME
+        value: GVT
+      - key: SEED_DEMO
+        value: "false"
