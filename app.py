@@ -195,7 +195,7 @@ def seed_initial_data():
         db.session.commit()
 
 class WSGIPrefixFix:
-    """WSGI Middleware ensuring standard SCRIPT_NAME and PATH_INFO for Serverless / Reverse Proxies"""
+    """WSGI Middleware ensuring standard SCRIPT_NAME and PATH_INFO for Serverless / Reverse Proxies / Vercel"""
     def __init__(self, wsgi_app):
         self.wsgi_app = wsgi_app
 
@@ -203,11 +203,28 @@ class WSGIPrefixFix:
         # 1. Reset SCRIPT_NAME to root
         environ["SCRIPT_NAME"] = ""
 
-        # 2. Extract PATH_INFO
+        # 2. Extract original request path if routed through Vercel serverless rewrite
+        matched_path = (
+            environ.get("HTTP_X_MATCHED_PATH")
+            or environ.get("HTTP_X_FORWARDED_PATH")
+            or environ.get("HTTP_X_FORWARDED_URI")
+            or environ.get("x-matched-path")
+            or ""
+        )
+
         path = environ.get("PATH_INFO", "/") or "/"
 
-        # 3. Strip any serverless file prefixes if present
-        for prefix in ("/api/index.py", "/api/index", "/app.py"):
+        if matched_path and matched_path not in ("/api/index", "/api/index.py", "/api", "/api/"):
+            path = matched_path
+
+        # 3. Handle query string if attached to path
+        if "?" in path:
+            path, _, query = path.partition("?")
+            if query and not environ.get("QUERY_STRING"):
+                environ["QUERY_STRING"] = query
+
+        # 4. Strip any serverless file prefixes if present
+        for prefix in ("/api/index.py", "/api/index", "/app.py", "/index.py", "/index", "/api"):
             if path == prefix:
                 path = "/"
                 break
@@ -215,7 +232,7 @@ class WSGIPrefixFix:
                 path = path[len(prefix):]
                 break
 
-        # 4. Remove duplicate slashes
+        # 5. Clean up duplicate slashes and ensure leading slash
         while "//" in path:
             path = path.replace("//", "/")
 
