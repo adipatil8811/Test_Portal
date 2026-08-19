@@ -41,7 +41,7 @@
     </div>
 
     <!-- 4 Stats Cards -->
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; max-width: 550px; margin: 0 auto; text-align: center;">
+    <div class="result-stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; max-width: 550px; margin: 0 auto; text-align: center;">
       <div style="background: #ffffff; padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-light);">
         <div style="font-size: 0.7rem; font-weight: 700; color: var(--text-muted);">QUESTIONS</div>
         <div style="font-size: 1.25rem; font-weight: 800;">{{ result.totalQuestions }}</div>
@@ -60,6 +60,12 @@
       </div>
     </div>
   </div>
+
+  <style>
+    @media (max-width: 480px) {
+      .result-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.5rem !important; }
+    }
+  </style>
 
   <!-- Official Certificate Card (If passed) -->
   {% if certificate and not is_preview %}

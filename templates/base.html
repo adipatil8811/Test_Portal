@@ -23,7 +23,8 @@
         <span>{{ config.get('PORTAL_NAME', 'Test Portal') }}</span>
       </a>
 
-      <nav>
+      <!-- Desktop Nav -->
+      <nav class="desktop-nav">
         <ul class="nav-links">
           {% if session.get('admin_logged_in') %}
             <li><a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">📊 Dashboard</a></li>
@@ -37,6 +38,35 @@
           {% endif %}
         </ul>
       </nav>
+
+      <!-- Mobile Hamburger Button -->
+      <button
+        type="button"
+        id="mobile-nav-toggle"
+        class="mobile-nav-toggle"
+        aria-label="Toggle mobile menu"
+        onclick="toggleMobileMenu()"
+      >
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+    </div>
+
+    <!-- Mobile Nav Drawer -->
+    <div id="mobile-nav-drawer" class="mobile-nav-drawer">
+      <ul class="mobile-nav-list">
+        {% if session.get('admin_logged_in') %}
+          <li><a href="{{ url_for('admin.dashboard') }}" class="mobile-nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}" onclick="toggleMobileMenu()">📊 Dashboard</a></li>
+          <li><a href="{{ url_for('admin.create_test') }}" class="mobile-nav-link {% if request.endpoint == 'admin.create_test' %}active{% endif %}" onclick="toggleMobileMenu()">➕ Create Test</a></li>
+          <li><a href="{{ url_for('certificates.admin_certificates') }}" class="mobile-nav-link {% if request.endpoint == 'certificates.admin_certificates' %}active{% endif %}" onclick="toggleMobileMenu()">📜 Certificates</a></li>
+          <li><a href="{{ url_for('student.student_certificates') }}" class="mobile-nav-link" target="_blank" onclick="toggleMobileMenu()">🎒 Student Portal</a></li>
+          <li><a href="{{ url_for('auth.logout') }}" class="mobile-nav-link danger" onclick="toggleMobileMenu()">🚪 Logout</a></li>
+        {% else %}
+          <li><a href="{{ url_for('student.student_certificates') }}" class="mobile-nav-link" onclick="toggleMobileMenu()">📜 Student Certificates</a></li>
+          <li><a href="{{ url_for('auth.login') }}" class="mobile-nav-link active" onclick="toggleMobileMenu()">👨‍🏫 Teacher Sign In</a></li>
+        {% endif %}
+      </ul>
     </div>
   </header>
 
@@ -57,6 +87,19 @@
 
     {% block content %}{% endblock %}
   </main>
+
+  <script>
+    function toggleMobileMenu() {
+      const drawer = document.getElementById("mobile-nav-drawer");
+      const toggleBtn = document.getElementById("mobile-nav-toggle");
+      if (drawer) {
+        drawer.classList.toggle("open");
+      }
+      if (toggleBtn) {
+        toggleBtn.classList.toggle("open");
+      }
+    }
+  </script>
 
   {% block extra_scripts %}{% endblock %}
 </body>

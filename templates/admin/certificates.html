@@ -118,15 +118,12 @@
                     </a>
                     
                     {% if not cert.is_revoked %}
-                      <form method="POST" action="{{ url_for('certificates.revoke_certificate', certificate_id=cert.certificate_id) }}" onsubmit="const r = prompt('Reason for revoking this certificate:'); if(r){ this.reason.value = r; return true; } return false;">
-                        <input type="hidden" name="reason" value="">
-                        <button type="submit" class="btn btn-danger btn-sm" title="Revoke Certificate">
-                          ⛔ Revoke
-                        </button>
-                      </form>
+                      <button type="button" class="btn btn-danger btn-sm" title="Revoke Certificate" onclick="openRevokeModal('{{ cert.certificate_id }}', '{{ cert.student_name | e }}')">
+                        ⛔ Revoke
+                      </button>
                     {% else %}
-                      <form method="POST" action="{{ url_for('certificates.reinstate_certificate', certificate_id=cert.certificate_id) }}" onsubmit="return confirm('Reinstate this certificate?');">
-                        <button type="submit" class="btn btn-success btn-sm" title="Reinstate Certificate">
+                      <form method="POST" action="{{ url_for('certificates.reinstate_certificate', certificate_id=cert.certificate_id) }}" style="display:contents;">
+                        <button type="button" class="btn btn-success btn-sm" title="Reinstate Certificate" onclick="openReinstateModal(this.form, '{{ cert.certificate_id }}')">
                           ✓ Reinstate
                         </button>
                       </form>
@@ -141,4 +138,66 @@
     {% endif %}
   </div>
 </div>
+
+<!-- Revoke Certificate Modal -->
+<div id="revoke-modal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 440px;">
+    <form id="revoke-form" method="POST" action="">
+      <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">Revoke Certificate</h3>
+      <p id="revoke-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;"></p>
+      
+      <div class="form-group">
+        <label class="form-label" for="revoke-reason-input">Reason for Revocation</label>
+        <input type="text" id="revoke-reason-input" name="reason" class="form-control" placeholder="e.g. Administrative review, invalid attempt..." required />
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 1.25rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeRevokeModal()" style="min-height: 44px;">Cancel</button>
+        <button type="submit" class="btn btn-danger" style="min-height: 44px;">Confirm Revoke</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Reinstate Modal -->
+<div id="reinstate-modal" class="modal-overlay">
+  <div class="modal-card" style="max-width: 380px;">
+    <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">Reinstate Certificate</h3>
+    <p id="reinstate-desc" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Are you sure you want to reinstate this certificate as valid?</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+      <button type="button" class="btn btn-secondary" onclick="closeReinstateModal()" style="min-height: 44px;">Cancel</button>
+      <button type="button" id="reinstate-ok-btn" class="btn btn-success" style="min-height: 44px;">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let _reinstateForm = null;
+
+  function openRevokeModal(certId, studentName) {
+    const form = document.getElementById("revoke-form");
+    form.action = `/admin/certificates/${certId}/revoke`;
+    document.getElementById("revoke-desc").innerText = `Revoking certificate for ${studentName} (${certId}).`;
+    document.getElementById("revoke-reason-input").value = "";
+    document.getElementById("revoke-modal").classList.add("active");
+  }
+
+  function closeRevokeModal() {
+    document.getElementById("revoke-modal").classList.remove("active");
+  }
+
+  function openReinstateModal(form, certId) {
+    _reinstateForm = form;
+    document.getElementById("reinstate-modal").classList.add("active");
+    document.getElementById("reinstate-ok-btn").onclick = function() {
+      closeReinstateModal();
+      if (_reinstateForm) _reinstateForm.submit();
+    };
+  }
+
+  function closeReinstateModal() {
+    document.getElementById("reinstate-modal").classList.remove("active");
+    _reinstateForm = null;
+  }
+</script>
 {% endblock %}

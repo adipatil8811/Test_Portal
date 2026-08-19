@@ -520,8 +520,91 @@ body {
   50% { opacity: 0.4; }
 }
 
+/* ── Mobile Navigation Drawer & Hamburger ── */
+.mobile-nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+}
+
+.hamburger-line {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background-color: var(--text-main);
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-drawer {
+  display: none;
+  background-color: #ffffff;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 2px solid var(--primary);
+  padding: 0.75rem 1rem 1rem 1rem;
+  box-shadow: var(--shadow-lg);
+  animation: slideDown 0.2s ease-out;
+}
+
+.mobile-nav-drawer.open {
+  display: block;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mobile-nav-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0;
+  margin: 0;
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  color: var(--text-main);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  transition: background 0.15s ease;
+  min-height: 44px;
+}
+
+.mobile-nav-link:hover, .mobile-nav-link.active {
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.mobile-nav-link.danger {
+  color: var(--danger);
+}
+.mobile-nav-link.danger:hover {
+  background-color: var(--danger-bg);
+}
+
 @media (max-width: 640px) {
-  .nav-links { display: none; }
+  .desktop-nav { display: none !important; }
+  .nav-links { display: none !important; }
+  .mobile-nav-toggle { display: flex !important; }
   .form-row { grid-template-columns: 1fr; }
   .tests-grid { grid-template-columns: 1fr; }
   .card { padding: 1rem; }
@@ -546,8 +629,8 @@ body {
 
   /* Stats grid: 2 columns on phone */
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.65rem;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
   }
 
   /* Test cards: full width, bigger action buttons */
@@ -629,11 +712,11 @@ body {
     box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
   }
   .builder-bottom-bar .btn { flex: 1; justify-content: center; min-height: 46px; }
-  /* Add padding to main content so it's not hidden behind bottom bar */
   .test-builder-container { padding-bottom: 80px; }
 }
 @media (min-width: 641px) {
   .builder-bottom-bar { display: none !important; }
   .builder-top-actions { display: flex !important; }
 }
+
 
