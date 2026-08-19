@@ -28,13 +28,13 @@ Under **Environment Variables**, add:
 | Variable Key | Example Value | Description |
 | :--- | :--- | :--- |
 | `SECRET_KEY` | `your-secret-random-key-12345` | Flask session encryption key |
-| `ADMIN_PASSWORD` | `your-teacher-password` | Password to access the Teacher Portal |
-| `APP_URL` | `https://your-app-name.vercel.app` | Your public production domain |
-| `DATABASE_URL` *(Optional)* | `postgresql://user:pass@host/db` | Connect free cloud PostgreSQL (e.g. Supabase, Neon, or Vercel Postgres) for permanent storage |
+| `ADMIN_PASSWORD` | `your-teacher-password` | Password to access the Teacher Portal (default: `12345`) |
+| `APP_URL` | `https://testportalgvt.vercel.app` | Your public production domain |
+| `DATABASE_URL` *(Recommended)* | `postgresql://user:pass@host/db` | Connect free cloud PostgreSQL (e.g. Neon, Supabase, or Vercel Postgres) for permanent storage |
 
 ### Step 4: Click Deploy
 - Click **Deploy**. Vercel will install `requirements.txt` and launch your serverless app in ~1 minute.
-- Your platform is immediately live with free HTTPS and automated SSL at `https://your-app-name.vercel.app`!
+- Your platform is immediately live with free HTTPS and automated SSL at `https://testportalgvt.vercel.app`!
 
 ---
 

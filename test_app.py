@@ -78,7 +78,7 @@ class TestPlatformTestCase(unittest.TestCase):
         self.assertEqual(res2["incorrectCount"], 2)
 
     def test_reportlab_pdf_generation(self):
-        """Verify ReportLab generates non-empty A4 landscape PDF in memory"""
+        """Verify ReportLab generates non-empty A4 landscape PDF in memory with production verify URL"""
         sample_data = {
             "studentName": "Alex Sharma",
             "testTitle": "General Science & Physics",
@@ -90,18 +90,36 @@ class TestPlatformTestCase(unittest.TestCase):
             "instituteName": "GVT",
             "certificateTemplate": "classic",
         }
-        pdf_bytes = generate_certificate_pdf(sample_data, verify_url="http://localhost:5000/verify/CERT-2026-TEST99")
+        pdf_bytes = generate_certificate_pdf(sample_data, verify_url="https://testportalgvt.vercel.app/verify/CERT-2026-TEST99")
         self.assertIsInstance(pdf_bytes, bytes)
         self.assertTrue(len(pdf_bytes) > 1000)
         self.assertTrue(pdf_bytes.startswith(b"%PDF"))
 
     def test_public_url_generation(self):
-        """Verify public share URLs and verification URLs"""
+        """Verify public share URLs and verification URLs in local and production environments"""
+        # Local development test
         share_url = get_test_share_url("t_demo_science")
         self.assertTrue(share_url.endswith("/test/t_demo_science"))
         
         verify_url = get_certificate_verify_url("CERT-2026-TEST99")
         self.assertTrue(verify_url.endswith("/verify/CERT-2026-TEST99"))
+
+    def test_production_environment_urls(self):
+        """Verify production URL resolver generates https://testportalgvt.vercel.app"""
+        import os
+        orig_vercel = os.environ.get("VERCEL")
+        try:
+            os.environ["VERCEL"] = "1"
+            self.app.config["IS_PRODUCTION"] = True
+            
+            self.assertEqual(get_test_share_url("ABC123"), "https://testportalgvt.vercel.app/test/ABC123")
+            self.assertEqual(get_certificate_verify_url("CERT-12345"), "https://testportalgvt.vercel.app/verify/CERT-12345")
+        finally:
+            if orig_vercel is None:
+                os.environ.pop("VERCEL", None)
+            else:
+                os.environ["VERCEL"] = orig_vercel
+            self.app.config["IS_PRODUCTION"] = False
 
     def test_routes_status_codes(self):
         """Verify web routes return 200 OK"""

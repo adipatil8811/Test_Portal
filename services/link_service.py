@@ -2,30 +2,55 @@ import os
 import urllib.parse
 from flask import request, current_app
 
+PROD_URL = "https://testportalgvt.vercel.app"
+
 def get_base_url():
     """
     Returns the public base URL of the platform.
     Priority:
-    1. Config APP_URL (e.g. https://your-domain.com)
-    2. VERCEL_URL (auto-injected on Vercel deployment)
-    3. request.host_url (if within a request context)
-    4. Default http://localhost:5000
+    1. APP_URL from Flask config or environment (if not localhost in production)
+    2. If in production / Vercel: https://testportalgvt.vercel.app
+    3. Host from current request context (if not localhost in production)
+    4. Default http://localhost:5000 for local development
     """
-    configured = current_app.config.get("APP_URL") if current_app else os.getenv("APP_URL")
-    if configured and configured not in ("http://localhost:5000", "http://127.0.0.1:5000"):
+    is_prod = False
+    if current_app:
+        is_prod = bool(current_app.config.get("IS_PRODUCTION", False))
+    if not is_prod:
+        is_prod = bool(os.getenv("VERCEL") or os.getenv("RENDER") or os.getenv("FLASK_ENV") == "production" or os.getenv("ENV") == "production")
+
+    configured = None
+    if current_app:
+        configured = current_app.config.get("APP_URL")
+    if not configured:
+        configured = os.getenv("APP_URL")
+
+    # When in production / on Vercel
+    if is_prod:
+        if configured and "localhost" not in configured and "127.0.0.1" not in configured:
+            return configured.rstrip("/")
+        try:
+            if request and request.host_url:
+                host_url = request.host_url.rstrip("/")
+                if "localhost" not in host_url and "127.0.0.1" not in host_url:
+                    if host_url.startswith("http://"):
+                        host_url = "https://" + host_url[len("http://"):]
+                    return host_url
+        except Exception:
+            pass
+        return PROD_URL
+
+    # Local development
+    if configured:
         return configured.rstrip("/")
     
-    vercel_url = os.getenv("VERCEL_URL")
-    if vercel_url:
-        return f"https://{vercel_url}".rstrip("/")
-
     try:
         if request and request.host_url:
             return request.host_url.rstrip("/")
     except Exception:
         pass
-    
-    return (configured or "http://localhost:5000").rstrip("/")
+
+    return "http://localhost:5000"
 
 def get_test_share_url(test_id):
     """Generate public student test link"""

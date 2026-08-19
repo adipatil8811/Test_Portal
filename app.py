@@ -10,6 +10,7 @@ from models.admin import AdminUser
 from routes import register_routes
 from utils.security import is_admin_authenticated
 from utils.helpers import format_date, generate_test_id, generate_question_id
+from services.link_service import get_base_url
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -71,7 +72,7 @@ def create_app(config_class=Config):
     def inject_globals():
         return {
             "is_admin": is_admin_authenticated(),
-            "app_url": app.config.get("APP_URL", "http://localhost:5000"),
+            "app_url": get_base_url(),
             "portal_name": app.config.get("PORTAL_NAME", "Online Test Portal"),
             "institute_name": app.config.get("INSTITUTE_NAME", "GVT"),
         }

@@ -41,7 +41,7 @@ Under your Vercel Project **Settings** → **Environment Variables**, add the fo
 | `SECRET_KEY` | **Yes** | `f83a912b4e72c8901f...` *(generate random 32-char string)* | Session encryption key |
 | `ADMIN_USERNAME` | Optional | `admin` | Teacher admin login username (default: `admin`) |
 | `ADMIN_PASSWORD` | **Yes** | `your_chosen_secure_password` | Teacher admin login password (default: `12345`) |
-| `APP_URL` | Optional | `https://your-project.vercel.app` | Public domain (auto-detected if omitted) |
+| `APP_URL` | Optional | `https://testportalgvt.vercel.app` | Public domain (default: `https://testportalgvt.vercel.app`) |
 | `REQUIRE_PERSISTENT_DB` | Optional | `true` | If `true`, ensures server fails loudly if database is disconnected |
 | `SEED_DEMO` | Optional | `false` | Set to `false` in production (prevents auto-inserting sample test) |
 | `PORTAL_NAME` | Optional | `Online Test Portal` | Header brand title |
@@ -58,7 +58,7 @@ Under your Vercel Project **Settings** → **Environment Variables**, add the fo
    git push origin main
    ```
 2. Go to **[vercel.com/new](https://vercel.com/new)**.
-3. Import your repository: **`adipatil8811/Test_Portal`**.
+3. Import your repository: **`adipatil8811/testportalgvt`**.
 4. Add the **Environment Variables** configured in Step 2.
 5. Click **"Deploy"**.
 
@@ -68,7 +68,7 @@ Under your Vercel Project **Settings** → **Environment Variables**, add the fo
 
 Once deployment finishes, open:
 ```
-https://your-project.vercel.app/health
+https://testportalgvt.vercel.app/health
 ```
 
 Expected response (HTTP 200 OK):
@@ -89,7 +89,7 @@ If the database is unreachable, `/health` returns HTTP 503 with the specific con
 ## 🧪 Step 5 — Production Workflow Checklist
 
 ### A. Teacher Workflow
-1. Open `https://your-project.vercel.app/login`.
+1. Open `https://testportalgvt.vercel.app/login`.
 2. Sign in with your `ADMIN_PASSWORD`.
 3. Click **"➕ Create Test"**:
    - Add title, subject, instructions, passing percentage, and questions.
@@ -99,7 +99,7 @@ If the database is unreachable, `/health` returns HTTP 503 with the specific con
 
 ### B. Student Workflow
 1. Open the shareable test link on any mobile phone or computer:
-   `https://your-project.vercel.app/test/<test_id>`
+   `https://testportalgvt.vercel.app/test/<test_id>`
 2. Fill in Name and Roll Number.
 3. Answer questions before the live countdown timer expires.
 4. Click **"Submit Assessment"**.
@@ -107,5 +107,5 @@ If the database is unreachable, `/health` returns HTTP 503 with the specific con
 6. If passing, click **"📥 Download Official PDF Certificate"**.
 
 ### C. Public Verification
-1. Open `https://your-project.vercel.app/verify/<certificate_id>` (or scan the QR code on the PDF).
+1. Open `https://testportalgvt.vercel.app/verify/<certificate_id>` (or scan the QR code on the PDF).
 2. The page verifies the student's name, exam title, score, percentage, issue date, and authenticity status.

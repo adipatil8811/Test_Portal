@@ -18,18 +18,23 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     
     # Public Application Base URL
-    vercel_url = os.getenv("VERCEL_URL")
-    render_external_url = os.getenv("RENDER_EXTERNAL_URL")
-    if render_external_url:
-        default_prod_url = render_external_url
-    elif vercel_url:
-        default_prod_url = f"https://{vercel_url}"
+    # Production default: https://testportalgvt.vercel.app
+    # Development default: http://localhost:5000
+    is_vercel = bool(os.getenv("VERCEL"))
+    is_prod_env = os.getenv("FLASK_ENV") == "production" or os.getenv("ENV") == "production"
+    
+    app_url_env = os.getenv("APP_URL")
+    if app_url_env:
+        APP_URL = app_url_env.rstrip("/")
+    elif is_vercel or is_prod_env:
+        APP_URL = "https://testportalgvt.vercel.app"
+    elif os.getenv("RENDER_EXTERNAL_URL"):
+        APP_URL = os.getenv("RENDER_EXTERNAL_URL").rstrip("/")
     else:
-        default_prod_url = "http://localhost:5000"
-    APP_URL = os.getenv("APP_URL", default_prod_url).rstrip("/")
+        APP_URL = "http://localhost:5000"
     
     # Enable HTTPS cookies in production or on Vercel/Render
-    IS_PRODUCTION = bool(os.getenv("VERCEL") or os.getenv("RENDER") or APP_URL.startswith("https://"))
+    IS_PRODUCTION = bool(is_vercel or is_prod_env or os.getenv("RENDER") or APP_URL.startswith("https://"))
     SESSION_COOKIE_SECURE = IS_PRODUCTION
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
 
