@@ -56,7 +56,19 @@ def create_app(config_class=Config):
     @app.route("/api/static/<path:filename>")
     @app.route("/api/index/static/<path:filename>")
     def custom_static(filename):
-        return send_from_directory(os.path.join(BASE_DIR, "static"), filename)
+        mimetype = None
+        lower_name = filename.lower()
+        if lower_name.endswith(".css"):
+            mimetype = "text/css"
+        elif lower_name.endswith(".js"):
+            mimetype = "application/javascript"
+        elif lower_name.endswith(".svg"):
+            mimetype = "image/svg+xml"
+        elif lower_name.endswith(".png"):
+            mimetype = "image/png"
+        elif lower_name.endswith((".jpg", ".jpeg")):
+            mimetype = "image/jpeg"
+        return send_from_directory(os.path.join(BASE_DIR, "static"), filename, mimetype=mimetype)
 
     # Production Security Headers Middleware
     @app.after_request
@@ -199,9 +211,13 @@ class WSGIPrefixFix:
         environ["SCRIPT_NAME"] = ""
         path = environ.get("PATH_INFO", "/") or "/"
 
-        # If PATH_INFO is literally the serverless file endpoint, route to root
+        # If PATH_INFO is literally the serverless file endpoint, check raw requested path from headers
         if path in ("/api/index.py", "/api/index", "/app.py", "/index.py", "/index", "/api", "/api/"):
-            path = "/"
+            raw_uri = environ.get("HTTP_X_FORWARDED_PATH") or environ.get("REQUEST_URI") or environ.get("RAW_URI")
+            if raw_uri and raw_uri not in ("/api/index.py", "/api/index", "/app.py", "/index.py", "/index", "/api", "/api/"):
+                path = raw_uri.split("?")[0]
+            else:
+                path = "/"
         elif path.startswith("/api/index.py/"):
             path = path[len("/api/index.py"):]
         elif path.startswith("/api/index/"):
