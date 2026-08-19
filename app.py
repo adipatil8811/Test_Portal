@@ -202,8 +202,32 @@ def seed_initial_data():
 
         db.session.commit()
 
+class WSGIPrefixFix:
+    """WSGI Middleware ensuring standard PATH_INFO by stripping serverless entry point prefixes"""
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        environ["SCRIPT_NAME"] = ""
+        path = environ.get("PATH_INFO", "/") or "/"
+
+        for prefix in ("/api/index.py", "/api/index", "/api", "/index.py", "/app.py"):
+            if path == prefix or path == prefix + "/":
+                path = "/"
+                break
+            elif path.startswith(prefix + "/"):
+                path = path[len(prefix):]
+                break
+
+        if not path.startswith("/"):
+            path = "/" + path
+
+        environ["PATH_INFO"] = path
+        return self.wsgi_app(environ, start_response)
+
 # Create application instance for WSGI runners
 app = create_app()
+app.wsgi_app = WSGIPrefixFix(app.wsgi_app)
 handler = app
 application = app
 
