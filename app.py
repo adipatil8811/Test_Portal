@@ -202,39 +202,8 @@ def seed_initial_data():
 
         db.session.commit()
 
-class WSGIPrefixFix:
-    """WSGI Middleware ensuring standard SCRIPT_NAME and PATH_INFO for Serverless / Reverse Proxies / Vercel"""
-    def __init__(self, wsgi_app):
-        self.wsgi_app = wsgi_app
-
-    def __call__(self, environ, start_response):
-        environ["SCRIPT_NAME"] = ""
-        path = environ.get("PATH_INFO", "/") or "/"
-
-        # If PATH_INFO is literally the serverless file endpoint, check raw requested path from headers
-        if path in ("/api/index.py", "/api/index", "/app.py", "/index.py", "/index", "/api", "/api/"):
-            raw_uri = environ.get("HTTP_X_FORWARDED_PATH") or environ.get("REQUEST_URI") or environ.get("RAW_URI")
-            if raw_uri and raw_uri not in ("/api/index.py", "/api/index", "/app.py", "/index.py", "/index", "/api", "/api/"):
-                path = raw_uri.split("?")[0]
-            else:
-                path = "/"
-        elif path.startswith("/api/index.py/"):
-            path = path[len("/api/index.py"):]
-        elif path.startswith("/api/index/"):
-            path = path[len("/api/index"):]
-
-        while "//" in path:
-            path = path.replace("//", "/")
-
-        if not path.startswith("/"):
-            path = "/" + path
-
-        environ["PATH_INFO"] = path
-        return self.wsgi_app(environ, start_response)
-
 # Create application instance for WSGI runners
 app = create_app()
-app.wsgi_app = WSGIPrefixFix(app.wsgi_app)
 handler = app
 application = app
 
