@@ -14,7 +14,6 @@ from services.link_service import get_certificate_verify_url
 student_bp = Blueprint("student", __name__)
 
 @student_bp.route("/test/<test_id>", methods=["GET"])
-@student_bp.route("/api/test/<test_id>", methods=["GET"])
 def take_test(test_id):
     """Student test registration & live question runner"""
     test = Test.query.filter_by(test_id=test_id).first_or_404()
@@ -51,7 +50,6 @@ def take_test(test_id):
     )
 
 @student_bp.route("/test/<test_id>/submit", methods=["POST"])
-@student_bp.route("/api/test/<test_id>/submit", methods=["POST"])
 def submit_test(test_id):
     """Authoritative server-side test evaluation and result storage"""
     test = Test.query.filter_by(test_id=test_id).first_or_404()
