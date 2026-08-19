@@ -1,0 +1,142 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Question Paper — {{ test.title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+
+  <!-- Header Card -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <span class="badge badge-primary" style="margin-bottom: 0.4rem;">📄 Question Paper</span>
+        <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.25rem 0;">{{ test.title }}</h1>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.82rem; color: var(--text-muted); margin-top: 0.4rem;">
+          {% if test.subject %}<span>📚 {{ test.subject }}</span>{% endif %}
+          {% if test.class_name %}<span>🏫 {{ test.class_name }}</span>{% endif %}
+          {% if test.duration and test.duration > 0 %}<span>⏱️ {{ test.duration }} mins</span>{% endif %}
+          <span>🎯 Total Marks: <strong>{{ test.total_marks }}</strong></span>
+          <span>❓ {{ test.questions | length }} Questions</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="{{ url_for('admin.question_paper_pdf', test_id=test.test_id) }}"
+           class="btn btn-primary"
+           style="min-height: 44px;"
+           id="download-pdf-btn">
+          📥 Download PDF
+        </a>
+        <button type="button" class="btn btn-secondary" onclick="window.print()" style="min-height: 44px;">
+          🖨️ Print
+        </button>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary" style="min-height: 44px;">
+          ← Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% if test.description %}
+  <!-- Instructions -->
+  <div class="card" style="margin-bottom: 1.5rem; background: #fffbeb; border-color: var(--warning-border); padding: 1rem 1.25rem;">
+    <p style="font-size: 0.85rem; font-weight: 700; color: var(--warning-text); margin-bottom: 0.25rem;">📋 Instructions:</p>
+    <p style="font-size: 0.875rem; color: var(--text-main); line-height: 1.6; white-space: pre-line;">{{ test.description }}</p>
+  </div>
+  {% endif %}
+
+  <!-- Student Info (to fill on printed paper) -->
+  <div class="card" style="margin-bottom: 1.5rem; padding: 1rem 1.25rem;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+      <div>
+        <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">Student Name</div>
+        <div style="border-bottom: 2px solid var(--border-card); height: 28px;"></div>
+      </div>
+      <div>
+        <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">Roll Number</div>
+        <div style="border-bottom: 2px solid var(--border-card); height: 28px;"></div>
+      </div>
+      <div>
+        <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">Class / Div</div>
+        <div style="border-bottom: 2px solid var(--border-card); height: 28px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Questions -->
+  <div style="display: flex; flex-direction: column; gap: 1rem;">
+    {% for q in test.questions %}
+    <div class="card" style="padding: 1rem 1.25rem;">
+      <!-- Question Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.6rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+          <span class="badge badge-primary" style="white-space: nowrap;">Q{{ loop.index }}</span>
+          {% if q.required %}
+            <span style="color: var(--danger); font-weight: 700; font-size: 0.85rem;" title="Compulsory">*</span>
+          {% endif %}
+          <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); line-height: 1.45; margin: 0;">
+            {{ q.question_text }}
+          </h3>
+        </div>
+        <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); white-space: nowrap;">
+          [{{ q.marks }} {{ 'Mark' if q.marks == 1 else 'Marks' }}]
+        </span>
+      </div>
+
+      <!-- Options / Answer area -->
+      {% if q.question_type == 'multiple-choice' or q.question_type == 'multiple-correct' %}
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+          {% set labels = ['A', 'B', 'C', 'D', 'E', 'F'] %}
+          {% for opt in q.options %}
+            {% if opt %}
+            <div style="display: flex; align-items: center; gap: 0.65rem; padding: 0.5rem 0.75rem; background: #f8fafc; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+              <span style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-card); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0;">
+                {{ labels[loop.index0] if loop.index0 < labels|length else loop.index }}
+              </span>
+              <span style="font-size: 0.9rem; color: var(--text-main);">{{ opt }}</span>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+      {% elif q.question_type == 'true-false' %}
+        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+          {% for tf in ['True', 'False'] %}
+          <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f8fafc; border-radius: var(--radius-sm); border: 1px solid var(--border-light);">
+            <span style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-card); display: inline-block;"></span>
+            <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-main);">{{ tf }}</span>
+          </div>
+          {% endfor %}
+        </div>
+
+      {% elif q.question_type == 'short-answer' %}
+        <div style="margin-top: 0.65rem; border-bottom: 1.5px solid var(--border-card); height: 32px;"></div>
+
+      {% elif q.question_type == 'paragraph' %}
+        {% for _ in range(4) %}
+        <div style="margin-top: 0.4rem; border-bottom: 1.5px solid var(--border-card); height: 28px;"></div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align: center; margin-top: 2rem; padding: 1rem; color: var(--text-muted); font-size: 0.8rem;">
+    *** End of Question Paper *** &nbsp;|&nbsp; {{ test.institute_name or institute_name }}
+  </div>
+</div>
+
+<!-- Print Styles -->
+<style>
+  @media print {
+    .navbar, .student-header, header, footer, .student-footer,
+    #download-pdf-btn, .btn[onclick="window.print()"],
+    a[href*="dashboard"] { display: none !important; }
+    .main-content, .student-main { padding: 0 !important; }
+    body { background: #fff; }
+    .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+  }
+</style>
+{% endblock %}

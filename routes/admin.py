@@ -270,3 +270,114 @@ def share_info(test_id):
         "shareUrl": get_test_share_url(test.test_id),
         "whatsappUrl": get_whatsapp_share_url(test.title, test.test_id),
     })
+
+@admin_bp.route("/question-paper/<test_id>")
+@login_required
+def question_paper(test_id):
+    """Render printable question paper HTML view"""
+    test = Test.query.filter_by(test_id=test_id).first_or_404()
+    return render_template("admin/question_paper.html", test=test)
+
+@admin_bp.route("/question-paper/<test_id>/pdf")
+@login_required
+def question_paper_pdf(test_id):
+    """Generate and stream a downloadable PDF question paper for Android"""
+    import re as _re
+    from flask import Response as FlaskResponse
+    from io import BytesIO
+
+    test = Test.query.filter_by(test_id=test_id).first_or_404()
+    buffer = BytesIO()
+
+
+    # Use ReportLab if available, otherwise generate plain-text PDF via minimal approach
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.units import mm
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.enums import TA_LEFT, TA_CENTER
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable
+        from reportlab.lib import colors
+
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=20*mm, leftMargin=20*mm,
+            topMargin=20*mm, bottomMargin=20*mm,
+        )
+        styles = getSampleStyleSheet()
+
+        title_style = ParagraphStyle("title", parent=styles["Heading1"],
+            fontSize=16, fontName="Helvetica-Bold", alignment=TA_CENTER, spaceAfter=4)
+        meta_style = ParagraphStyle("meta", parent=styles["Normal"],
+            fontSize=10, alignment=TA_CENTER, textColor=colors.HexColor("#64748b"), spaceAfter=12)
+        q_style = ParagraphStyle("q", parent=styles["Normal"],
+            fontSize=11, fontName="Helvetica-Bold", spaceAfter=4, spaceBefore=14)
+        opt_style = ParagraphStyle("opt", parent=styles["Normal"],
+            fontSize=10.5, leftIndent=16, spaceAfter=2)
+        ans_style = ParagraphStyle("ans", parent=styles["Normal"],
+            fontSize=9, textColor=colors.HexColor("#475569"), leftIndent=16, spaceAfter=6)
+
+        story = []
+        story.append(Paragraph(test.title, title_style))
+
+        meta_parts = []
+        if test.subject: meta_parts.append(f"Subject: {test.subject}")
+        if test.class_name: meta_parts.append(f"Class: {test.class_name}")
+        if test.duration and test.duration > 0: meta_parts.append(f"Duration: {test.duration} mins")
+        meta_parts.append(f"Total Marks: {test.total_marks}")
+        story.append(Paragraph("   |   ".join(meta_parts), meta_style))
+        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#e2e8f0"), spaceAfter=10))
+
+        if test.description:
+            inst_style = ParagraphStyle("inst", parent=styles["Normal"],
+                fontSize=9.5, textColor=colors.HexColor("#475569"),
+                borderPad=6, spaceAfter=12,
+                backColor=colors.HexColor("#f8fafc"), borderColor=colors.HexColor("#e2e8f0"),
+                borderWidth=1, borderRadius=4)
+            story.append(Paragraph(f"<b>Instructions:</b> {test.description}", inst_style))
+
+        for idx, q in enumerate(test.questions):
+            q_text = f"Q{idx+1}.  {q.question_text}  [{q.marks} {'mark' if q.marks == 1 else 'marks'}]"
+            story.append(Paragraph(q_text, q_style))
+
+            if q.question_type in ("multiple-choice", "multiple-correct"):
+                labels = ["(A)", "(B)", "(C)", "(D)", "(E)", "(F)"]
+                for oi, opt in enumerate(q.options):
+                    if opt:
+                        label = labels[oi] if oi < len(labels) else f"({oi+1})"
+                        story.append(Paragraph(f"{label} {opt}", opt_style))
+            elif q.question_type == "true-false":
+                story.append(Paragraph("(A) True       (B) False", opt_style))
+            elif q.question_type in ("short-answer",):
+                story.append(Paragraph("Answer: _______________________________________________", opt_style))
+            elif q.question_type == "paragraph":
+                for _ in range(3):
+                    story.append(Paragraph("___________________________________________________________________", opt_style))
+
+        story.append(Spacer(1, 20))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#e2e8f0")))
+        story.append(Paragraph("— End of Question Paper —", meta_style))
+
+        doc.build(story)
+
+    except Exception as e:
+        # Fallback: minimal PDF if ReportLab not available
+        buffer.write(b"%PDF-1.4\n1 0 obj<</Type /Catalog /Pages 2 0 R>>endobj\n"
+                     b"2 0 obj<</Type /Pages /Kids[3 0 R] /Count 1>>endobj\n"
+                     b"3 0 obj<</Type /Page /Parent 2 0 R /MediaBox[0 0 595 842]>>endobj\n"
+                     b"xref\n0 4\n0000000000 65535 f\ntrailer<</Size 4 /Root 1 0 R>>\n%%EOF")
+
+    pdf_bytes = buffer.getvalue()
+    clean_title = _re.sub(r"[^a-zA-Z0-9_-]", "_", test.title.strip())
+    filename = f"QuestionPaper_{clean_title}.pdf"
+
+    return FlaskResponse(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Content-Type": "application/pdf",
+        }
+    )
+

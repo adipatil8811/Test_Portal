@@ -337,7 +337,8 @@ async function publishTestWithValidation(testId) {
   });
   const result = await res.json();
   if (result.success) {
-    window.location.href = `/admin?published=${testId}`;
+    window.location.href = `/admin/dashboard`;
+
   } else {
     alert("Cannot publish: " + (result.error || "Failed to publish."));
   }

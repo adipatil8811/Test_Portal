@@ -6,42 +6,45 @@
 <div class="test-builder-container" style="max-width: 900px; margin: 0 auto;">
   <input type="hidden" id="test-id" value="{{ new_test_id }}">
 
-  <!-- Top Sticky Header -->
-  <div style="background: #ffffff; border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 1.15rem 1.35rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; position: sticky; top: 70px; z-index: 30; box-shadow: var(--shadow-sm);">
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-sm" title="Back to Dashboard">
+  <!-- Top Sticky Header — shows Back + title on mobile; full actions on desktop -->
+  <div class="builder-sticky-top" style="background: #ffffff; border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.65rem; position: sticky; top: 70px; z-index: 30; box-shadow: var(--shadow-sm);">
+    <div style="display: flex; align-items: center; gap: 0.65rem; min-width: 0;">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary btn-sm" title="Back to Dashboard" style="white-space:nowrap;">
         ← Back
       </a>
-      <div>
-        <h1 style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin: 0;">
+      <div style="min-width: 0;">
+        <h1 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
           {{ 'Edit Test' if not is_new else 'Create Test' }}
         </h1>
-        <span id="save-status" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;"></span>
+        <span id="save-status" style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;"></span>
       </div>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+    <!-- Desktop actions (hidden on mobile — moved to bottom bar) -->
+    <div class="builder-top-actions" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
       <span id="total-marks-badge" class="badge badge-primary">0 Marks</span>
-
-      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSettingsModal()">
-        ⚙️ Settings
-      </button>
-
+      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSettingsModal()">⚙️ Settings</button>
       {% if not is_new and test %}
-        <a href="{{ url_for('student.take_test', test_id=test.test_id, preview='true') }}" target="_blank" class="btn btn-secondary btn-sm">
-          👁️ Preview
-        </a>
+        <a href="{{ url_for('student.take_test', test_id=test.test_id, preview='true') }}" target="_blank" class="btn btn-secondary btn-sm">👁️ Preview</a>
       {% endif %}
-
-      <button type="button" class="btn btn-secondary btn-sm" onclick="saveDraftTest()">
-        💾 Save Draft
-      </button>
-
+      <button type="button" class="btn btn-secondary btn-sm" onclick="saveDraftTest()">💾 Save Draft</button>
       <button type="button" class="btn btn-success btn-sm" onclick="publishTestWithValidation('{{ new_test_id }}')">
         🚀 {{ 'Update & Publish' if not is_new else 'Publish Test' }}
       </button>
     </div>
   </div>
+
+  <!-- Mobile bottom action bar (only visible on ≤640px via CSS) -->
+  <div class="builder-bottom-bar">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="saveDraftTest()">💾 Save</button>
+    {% if not is_new and test %}
+      <a href="{{ url_for('student.take_test', test_id=test.test_id, preview='true') }}" target="_blank" class="btn btn-secondary btn-sm">👁️ Preview</a>
+    {% endif %}
+    <button type="button" class="btn btn-success btn-sm" onclick="publishTestWithValidation('{{ new_test_id }}')">
+      🚀 Publish
+    </button>
+  </div>
+
 
   <!-- Primary Test Details Card -->
   <div class="card" style="margin-bottom: 1.5rem;">
